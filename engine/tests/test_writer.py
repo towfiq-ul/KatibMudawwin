@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from zoom_notes_engine.models import AudioSource, TranscriptEntry
-from zoom_notes_engine.session.writer import TranscriptWriter, timestamp_prefix
+from katib_mudawwin.models import AudioSource, TranscriptEntry
+from katib_mudawwin.session.writer import TranscriptWriter, timestamp_prefix
 
 
 def test_file_naming(tmp_path):

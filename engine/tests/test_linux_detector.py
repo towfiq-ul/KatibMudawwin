@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from zoom_notes_engine.detection.linux_detector import PactlAudioSignalSource
+from katib_mudawwin.detection.linux_detector import PactlAudioSignalSource
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -19,7 +19,7 @@ def _patch_pactl(monkeypatch, sink_inputs_json: str, source_outputs_json: str = 
         raise AssertionError(f"unexpected pactl command: {cmd}")
 
     monkeypatch.setattr(
-        "zoom_notes_engine.detection.linux_detector.subprocess.run", fake_run
+        "katib_mudawwin.detection.linux_detector.subprocess.run", fake_run
     )
 
 
@@ -51,7 +51,7 @@ def test_zoom_not_running_short_circuits_without_calling_pactl(monkeypatch):
         raise AssertionError("pactl should not be called when Zoom isn't running")
 
     monkeypatch.setattr(
-        "zoom_notes_engine.detection.linux_detector.subprocess.run", fail_run
+        "katib_mudawwin.detection.linux_detector.subprocess.run", fail_run
     )
     source = PactlAudioSignalSource(process_hint="zoom")
     monkeypatch.setattr(source, "_process_running", lambda: False)

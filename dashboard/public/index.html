@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Zoom Notes Dashboard</title>
+  <title>KātibMudawwin</title>
   <style>
     body { font-family: system-ui, sans-serif; max-width: 48rem; margin: 2rem auto; padding: 0 1rem; color: #222; }
     h1 { font-size: 1.4rem; }
@@ -27,7 +27,7 @@
   </style>
 </head>
 <body>
-  <h1>Zoom Notes Dashboard</h1>
+  <h1 id="app-title">KātibMudawwin</h1>
 
   <section>
     <h2>Engine status</h2>
@@ -51,12 +51,12 @@
       </label>
       <label>Summarizer provider
         <select name="summarizer.provider">
-          <option value="ollama">ollama</option>
+          <option value="local">local (Phi-3, offline)</option>
           <option value="claude">claude</option>
         </select>
       </label>
-      <label>Ollama model
-        <input name="summarizer.ollama.model" />
+      <label>Local model <span class="muted">(Hugging Face repo id, GGUF)</span>
+        <input name="summarizer.local.repo_id" />
       </label>
       <label>Claude model
         <input name="summarizer.claude.model" />
@@ -73,6 +73,19 @@
   </section>
 
   <script>
+    async function loadBranding() {
+      try {
+        const res = await fetch('/api/branding');
+        const data = await res.json();
+        if (data.displayName) {
+          document.title = data.displayName;
+          document.getElementById('app-title').textContent = data.displayName;
+        }
+      } catch (err) {
+        // Keep the hardcoded fallback already in the markup.
+      }
+    }
+
     function getPath(obj, dottedPath) {
       return dottedPath.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
     }
@@ -185,6 +198,7 @@
       setTimeout(() => { statusEl.textContent = ''; }, 3000);
     });
 
+    loadBranding();
     refreshEngineStatus();
     setInterval(refreshEngineStatus, 5000);
     loadMeetings();

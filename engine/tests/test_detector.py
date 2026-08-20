@@ -1,7 +1,7 @@
-from zoom_notes_engine.config import DetectionConfig
-from zoom_notes_engine.detection.base import AudioActivitySnapshot
-from zoom_notes_engine.detection.detector import MeetingDetector, MeetingDetectorState
-from zoom_notes_engine.detection.fake_signal_source import ScriptedAudioSignalSource
+from katib_mudawwin.config import DetectionConfig
+from katib_mudawwin.detection.base import AudioActivitySnapshot
+from katib_mudawwin.detection.detector import MeetingDetector, MeetingDetectorState
+from katib_mudawwin.detection.fake_signal_source import ScriptedAudioSignalSource
 
 ACTIVE = AudioActivitySnapshot(
     zoom_process_running=True, zoom_sink_input_active=True, zoom_source_output_active=False

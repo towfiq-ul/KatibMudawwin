@@ -1,4 +1,4 @@
-# Copy this file to ~/.config/zoom-note-taker/config.yaml and adjust as needed.
+# Copy this file to ~/.config/katib-mudawwin/config.yaml and adjust as needed.
 # Any field you omit falls back to the OS-aware default baked into config.py.
 
 # Where transcripts and summaries get written.
@@ -27,11 +27,12 @@ whisper:
   compute_type: "int8"
 
 summarizer:
-  provider: "ollama"        # "ollama" or "claude"
-  ollama:
-    base_url: "http://localhost:11434"
-    model: "phi3:3.8b-mini-128k"
-    num_ctx: 16384           # override Ollama's default context cap so long transcripts aren't truncated
+  provider: "local"         # "local" (Phi-3, runs in-process) or "claude"
+  local:
+    repo_id: "microsoft/Phi-3-mini-4k-instruct-gguf"
+    filename: "*q4.gguf"    # glob pattern; weights auto-download and cache on first use
+    n_ctx: 4096
+    n_threads: null         # null = let llama.cpp pick based on available cores
   claude:
     model: "claude-sonnet-5"
     api_key_env: "ANTHROPIC_API_KEY"  # used when api_key below is not set

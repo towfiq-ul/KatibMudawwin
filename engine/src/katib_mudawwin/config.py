@@ -8,11 +8,14 @@ from typing import Literal, Optional
 import yaml
 from pydantic import BaseModel, Field, field_validator
 
+from katib_mudawwin.branding import CONFIG_DIR_NAME
+
 
 # Keep these two functions in sync with defaultStorageDir() /
 # defaultConfigPath() in dashboard/src/lib/config.js -- if the two diverge,
 # the dashboard can end up reading a different directory than the engine
-# writes to, with meetings recorded but never listed.
+# writes to, with meetings recorded but never listed. Both pull the config
+# directory name from branding.json (see katib_mudawwin.branding).
 def default_storage_dir() -> Path:
     system = platform.system()
     if system == "Darwin":
@@ -30,7 +33,7 @@ def default_config_path() -> Path:
         base = Path.home() / "Library" / "Application Support"
     else:
         base = Path(os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config")))
-    return base / "zoom-note-taker" / "config.yaml"
+    return base / CONFIG_DIR_NAME / "config.yaml"
 
 
 class DetectionConfig(BaseModel):
@@ -58,13 +61,17 @@ class WhisperConfig(BaseModel):
     compute_type: str = "int8"
 
 
-class OllamaConfig(BaseModel):
-    base_url: str = "http://localhost:11434"
-    model: str = "phi3:3.8b-mini-128k"
-    # Ollama caps the context window per-model (often 2k-4k) regardless of what
-    # the model can theoretically handle, unless told otherwise -- this keeps
-    # most full meeting transcripts from being silently truncated.
-    num_ctx: int = 16384
+class LocalLlmConfig(BaseModel):
+    # Runs in-process via llama-cpp-python -- no separate service (unlike
+    # Ollama) needs to be running. `filename` is a glob pattern resolved
+    # against the repo's file list; the GGUF weights are downloaded once and
+    # cached by huggingface_hub the first time a summary is requested (see
+    # summarization/local_summarizer.py), the same lazy-download-and-cache
+    # pattern already used for the Whisper model.
+    repo_id: str = "microsoft/Phi-3-mini-4k-instruct-gguf"
+    filename: str = "*q4.gguf"
+    n_ctx: int = 4096
+    n_threads: Optional[int] = None
 
 
 class ClaudeConfig(BaseModel):
@@ -78,8 +85,8 @@ class ClaudeConfig(BaseModel):
 
 
 class SummarizerConfig(BaseModel):
-    provider: Literal["ollama", "claude"] = "ollama"
-    ollama: OllamaConfig = Field(default_factory=OllamaConfig)
+    provider: Literal["local", "claude"] = "local"
+    local: LocalLlmConfig = Field(default_factory=LocalLlmConfig)
     claude: ClaudeConfig = Field(default_factory=ClaudeConfig)
 
 

@@ -1,4 +1,4 @@
-# zoom-app-screen-note-taker
+# KātibMudawwin
 
 A local, personal meeting note-taker that runs alongside the Zoom desktop client.
 It detects when you're in a Zoom meeting, transcribes your mic and the meeting
@@ -13,8 +13,8 @@ for the full design.
 ## Components
 
 - `engine/` — Python background engine: meeting detection, audio capture, VAD,
-  Whisper transcription, summarization (Ollama or Claude), file writer, tray
-  icon, local status API.
+  Whisper transcription, summarization (local Phi-3 or Claude), file writer,
+  tray icon, local status API.
 - `dashboard/` — Node.js local web UI for browsing past notes/summaries and
   editing config.
 
@@ -29,21 +29,36 @@ design doc).
 ## Running it (Linux)
 
 ```bash
-make engine-setup      # create engine/.venv, install the Python engine
+make build              # engine-setup + dashboard-setup: install all deps
 make engine-test        # run the offline test suite
-make dashboard-setup    # npm install for the dashboard
-make engine-run          # start the engine (tray icon, status API, detection loop)
-make dashboard-run       # start the dashboard on http://localhost:5173
+make engine-run          # start the engine in the foreground (tray icon, status API, detection loop)
+make dashboard-run       # start the dashboard in the foreground on http://localhost:5173
 ```
 
-`make engine-run` starts the real engine: it polls for an active Zoom
-audio signal via `pactl`, and once a meeting is detected, captures your
-mic + Zoom's own output, transcribes them locally with Whisper, and
-writes `<timestamp>_meeting-notes.txt` / `<timestamp>_summary.txt` to
-`storage_dir` when the meeting ends. A tray icon and the dashboard both
-offer a manual Start/Stop override.
+The engine polls for an active Zoom audio signal via `pactl`, and once a
+meeting is detected, captures your mic + Zoom's own output, transcribes
+them locally with Whisper, and writes `<timestamp>_meeting-notes.txt` /
+`<timestamp>_summary.txt` to `storage_dir` when the meeting ends. A tray
+icon and the dashboard both offer a manual Start/Stop override.
 
-To autostart it on login, see `scripts/zoom-note-engine.service`.
+`-run` starts each service in the foreground, blocking the terminal
+with its live log output -- use it while developing. To run them as
+background processes instead:
+
+```bash
+make start          # engine-start + dashboard-start
+make stop            # engine-stop + dashboard-stop
+make engine-start     # just the engine, logs at .run/engine.log
+make engine-stop
+make dashboard-start   # just the dashboard, logs at .run/dashboard.log
+make dashboard-stop
+```
+
+PIDs are tracked in `.run/*.pid`; `engine-stop` first calls the status
+API's `/stop` so any in-progress recording is finalized (transcript +
+summary written) before the process is killed, rather than cut off mid-session.
+
+To autostart it on login, see `scripts/katib-mudawwin.service`.
 
 ## Prerequisites (Linux)
 
@@ -51,17 +66,17 @@ To autostart it on login, see `scripts/zoom-note-engine.service`.
 sudo apt install pulseaudio-utils ffmpeg libportaudio2
 ```
 
-- [Ollama](https://ollama.com) installed and a model pulled, e.g.:
-  ```bash
-  ollama pull phi3:3.8b-mini-128k
-  ```
-  ...if you want local summarization. For Claude API summarization instead,
-  set `ANTHROPIC_API_KEY` in your environment.
+Summarization defaults to a local Phi-3 model, running in-process via
+llama-cpp-python -- no separate service to install or start. The GGUF
+weights (~2.3GB) download once from Hugging Face Hub and are cached the
+first time a meeting is summarized. For Claude API summarization instead,
+set `summarizer.provider: claude` in your config and set
+`ANTHROPIC_API_KEY` in your environment.
 
 ## macOS / Windows differences (documented, not yet implemented/tested)
 
 This has only been built and tested on Linux so far. Porting the audio
-capture layer (`engine/src/zoom_notes_engine/audio/linux_capture.py`) and
+capture layer (`engine/src/katib_mudawwin/audio/linux_capture.py`) and
 detector (`.../detection/linux_detector.py`) would need:
 
 - **macOS**: there's no built-in monitor/loopback source like PipeWire's,

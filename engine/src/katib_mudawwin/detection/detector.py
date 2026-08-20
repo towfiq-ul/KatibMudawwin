@@ -4,8 +4,8 @@ import time
 from enum import Enum
 from typing import Callable, Optional
 
-from zoom_notes_engine.config import DetectionConfig
-from zoom_notes_engine.detection.base import AudioSignalSource
+from katib_mudawwin.config import DetectionConfig
+from katib_mudawwin.detection.base import AudioSignalSource
 
 
 class MeetingDetectorState(str, Enum):

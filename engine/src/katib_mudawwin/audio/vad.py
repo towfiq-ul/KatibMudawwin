@@ -5,7 +5,7 @@ from typing import Callable, List, Optional
 import numpy as np
 import webrtcvad
 
-from zoom_notes_engine.config import VadConfig
+from katib_mudawwin.config import VadConfig
 
 
 class VoiceActivityDetector:

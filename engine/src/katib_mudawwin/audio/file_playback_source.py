@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-from zoom_notes_engine.audio.base import AudioSource
+from katib_mudawwin.audio.base import AudioSource
 
 
 class FilePlaybackSource(AudioSource):

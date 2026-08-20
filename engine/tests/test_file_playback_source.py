@@ -3,7 +3,7 @@ import wave
 import numpy as np
 import pytest
 
-from zoom_notes_engine.audio.file_playback_source import FilePlaybackSource
+from katib_mudawwin.audio.file_playback_source import FilePlaybackSource
 
 SAMPLE_RATE = 16000
 

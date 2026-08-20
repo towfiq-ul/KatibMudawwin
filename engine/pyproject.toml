@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "zoom-notes-engine"
+name = "katib-mudawwin"
 version = "0.1.0"
-description = "Local background engine for automatic Zoom meeting note-taking"
+description = "KātibMudawwin -- local background engine for automatic Zoom meeting note-taking"
 requires-python = ">=3.10"
 dependencies = [
     "pydantic>=2",
@@ -19,17 +19,23 @@ dependencies = [
     "setuptools<80",
     "faster-whisper>=1.0",
     "flask>=3",
-    "requests>=2.31",
-    "anthropic>=0.40",
+    # >=1 hung for minutes (instead of failing fast) summarizing against an
+    # over-quota API key -- pin below it until that's understood.
+    "anthropic>=0.40,<1",
     "pystray>=0.19",
     "Pillow>=10",
+    # Runs the local (Phi-3) summarizer in-process -- no separate `ollama
+    # serve` needed. Prebuilt wheels cover common Linux/macOS/Windows +
+    # Python combos; falls back to a from-source build (needs a C/C++
+    # compiler) otherwise.
+    "llama-cpp-python>=0.2.90",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
 
 [project.scripts]
-zoom-notes-engine = "zoom_notes_engine.main:main"
+katib-mudawwin = "katib_mudawwin.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

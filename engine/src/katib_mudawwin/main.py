@@ -3,14 +3,14 @@ from __future__ import annotations
 import logging
 import threading
 
-from zoom_notes_engine.audio.linux_capture import MicSource, ZoomLoopbackSource
-from zoom_notes_engine.config import load_config
-from zoom_notes_engine.detection.detector import MeetingDetector
-from zoom_notes_engine.detection.linux_detector import PactlAudioSignalSource
-from zoom_notes_engine.session.recorder import SessionRecorder
-from zoom_notes_engine.status_api import run_status_api
-from zoom_notes_engine.transcription.whisper_engine import WhisperEngine
-from zoom_notes_engine.tray import build_tray_icon
+from katib_mudawwin.audio.linux_capture import MicSource, ZoomLoopbackSource
+from katib_mudawwin.config import load_config
+from katib_mudawwin.detection.detector import MeetingDetector
+from katib_mudawwin.detection.linux_detector import PactlAudioSignalSource
+from katib_mudawwin.session.recorder import SessionRecorder
+from katib_mudawwin.status_api import run_status_api
+from katib_mudawwin.transcription.whisper_engine import WhisperEngine
+from katib_mudawwin.tray import build_tray_icon
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"

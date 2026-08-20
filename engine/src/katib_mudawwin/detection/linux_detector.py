@@ -6,7 +6,7 @@ from typing import List
 
 import psutil
 
-from zoom_notes_engine.detection.base import AudioActivitySnapshot, AudioSignalSource
+from katib_mudawwin.detection.base import AudioActivitySnapshot, AudioSignalSource
 
 
 class PactlAudioSignalSource(AudioSignalSource):

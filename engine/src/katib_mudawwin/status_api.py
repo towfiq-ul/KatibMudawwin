@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from flask import Flask, jsonify
 
-from zoom_notes_engine.session.recorder import SessionRecorder
+from katib_mudawwin.session.recorder import SessionRecorder
 
 
 def create_app(recorder: SessionRecorder) -> Flask:

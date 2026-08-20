@@ -9,6 +9,9 @@ __pycache__/
 node_modules/
 npm-debug.log*
 
+# make start/stop PID files + logs
+/.run/
+
 # Local data / secrets
 *.local.yaml
 .env

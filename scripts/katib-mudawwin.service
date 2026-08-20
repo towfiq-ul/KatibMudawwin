@@ -2,21 +2,21 @@
 #
 # Install:
 #   mkdir -p ~/.config/systemd/user
-#   cp scripts/zoom-note-engine.service ~/.config/systemd/user/
+#   cp scripts/katib-mudawwin.service ~/.config/systemd/user/
 #   # edit the ExecStart path below to match where you cloned this repo
 #   systemctl --user daemon-reload
-#   systemctl --user enable --now zoom-note-engine.service
+#   systemctl --user enable --now katib-mudawwin.service
 #
-# Logs: journalctl --user -u zoom-note-engine -f
+# Logs: journalctl --user -u katib-mudawwin -f
 
 [Unit]
-Description=Zoom Notes Engine (local meeting note-taker)
+Description=KātibMudawwin (local meeting note-taker)
 After=graphical-session.target
 
 [Service]
 Type=simple
 # Adjust this path if the repo isn't checked out at ~/workspace/zoom-app-screen-note-taker
-ExecStart=%h/workspace/zoom-app-screen-note-taker/engine/.venv/bin/zoom-notes-engine
+ExecStart=%h/workspace/zoom-app-screen-note-taker/engine/.venv/bin/katib-mudawwin
 Restart=on-failure
 RestartSec=5
 

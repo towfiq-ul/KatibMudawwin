@@ -6,15 +6,15 @@ import time
 from datetime import datetime
 from typing import Callable, List, Optional
 
-from zoom_notes_engine.audio.base import AudioSource
-from zoom_notes_engine.audio.vad import UtteranceSegmenter, VoiceActivityDetector
-from zoom_notes_engine.config import AppConfig, VadConfig
-from zoom_notes_engine.detection.detector import MeetingDetector
-from zoom_notes_engine.models import AudioSource as AudioSourceLabel
-from zoom_notes_engine.models import SessionState, SessionStatus, TranscriptEntry
-from zoom_notes_engine.session.writer import TranscriptWriter
-from zoom_notes_engine.summarization import Summarizer, get_summarizer
-from zoom_notes_engine.transcription.whisper_engine import WhisperEngine
+from katib_mudawwin.audio.base import AudioSource
+from katib_mudawwin.audio.vad import UtteranceSegmenter, VoiceActivityDetector
+from katib_mudawwin.config import AppConfig, VadConfig
+from katib_mudawwin.detection.detector import MeetingDetector
+from katib_mudawwin.models import AudioSource as AudioSourceLabel
+from katib_mudawwin.models import SessionState, SessionStatus, TranscriptEntry
+from katib_mudawwin.session.writer import TranscriptWriter
+from katib_mudawwin.summarization import Summarizer, get_summarizer
+from katib_mudawwin.transcription.whisper_engine import WhisperEngine
 
 logger = logging.getLogger(__name__)
 

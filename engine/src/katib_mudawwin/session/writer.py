@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from zoom_notes_engine.models import TranscriptEntry
+from katib_mudawwin.models import TranscriptEntry
 
 
 def timestamp_prefix(dt: datetime) -> str:

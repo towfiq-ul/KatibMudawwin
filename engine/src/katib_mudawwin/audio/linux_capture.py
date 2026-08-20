@@ -9,7 +9,7 @@ from typing import Optional
 import numpy as np
 import sounddevice as sd
 
-from zoom_notes_engine.audio.base import AudioSource
+from katib_mudawwin.audio.base import AudioSource
 
 logger = logging.getLogger(__name__)
 

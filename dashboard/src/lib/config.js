@@ -3,19 +3,22 @@ const os = require('os');
 const path = require('path');
 const yaml = require('js-yaml');
 
+const { CONFIG_DIR_NAME } = require('./branding');
+
 // Keep these two functions in sync with default_storage_dir() /
-// default_config_path() in engine/src/zoom_notes_engine/config.py -- if the
+// default_config_path() in engine/src/katib_mudawwin/config.py -- if the
 // two diverge, the dashboard can end up reading a different directory than
-// the engine writes to, with meetings recorded but never listed.
+// the engine writes to, with meetings recorded but never listed. Both pull
+// the config directory name from branding.json (see ./branding).
 function defaultConfigPath() {
   const home = os.homedir();
   if (process.platform === 'win32') {
-    return path.join(process.env.APPDATA || home, 'zoom-note-taker', 'config.yaml');
+    return path.join(process.env.APPDATA || home, CONFIG_DIR_NAME, 'config.yaml');
   }
   if (process.platform === 'darwin') {
-    return path.join(home, 'Library', 'Application Support', 'zoom-note-taker', 'config.yaml');
+    return path.join(home, 'Library', 'Application Support', CONFIG_DIR_NAME, 'config.yaml');
   }
-  return path.join(process.env.XDG_CONFIG_HOME || path.join(home, '.config'), 'zoom-note-taker', 'config.yaml');
+  return path.join(process.env.XDG_CONFIG_HOME || path.join(home, '.config'), CONFIG_DIR_NAME, 'config.yaml');
 }
 
 function defaultStorageDir() {

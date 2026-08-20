@@ -4,8 +4,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from zoom_notes_engine.config import WhisperConfig
-from zoom_notes_engine.transcription.whisper_engine import WhisperEngine
+from katib_mudawwin.config import WhisperConfig
+from katib_mudawwin.transcription.whisper_engine import WhisperEngine
 
 FIXTURE = Path(__file__).parent / "fixtures" / "sample_meeting.wav"
 

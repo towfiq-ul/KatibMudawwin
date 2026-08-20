@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List
 
-from zoom_notes_engine.detection.base import AudioActivitySnapshot, AudioSignalSource
+from katib_mudawwin.detection.base import AudioActivitySnapshot, AudioSignalSource
 
 
 class ScriptedAudioSignalSource(AudioSignalSource):

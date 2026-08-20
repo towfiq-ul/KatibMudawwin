@@ -1,7 +1,7 @@
 import numpy as np
 
-from zoom_notes_engine.audio.vad import UtteranceSegmenter, VoiceActivityDetector
-from zoom_notes_engine.config import VadConfig
+from katib_mudawwin.audio.vad import UtteranceSegmenter, VoiceActivityDetector
+from katib_mudawwin.config import VadConfig
 
 
 def make_frame(value=0.1, length=320):  # 20ms @ 16kHz = 320 samples

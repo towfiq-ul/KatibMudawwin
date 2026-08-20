@@ -1,0 +1,10 @@
+{
+  "displayName": "KātibMudawwin",
+  "asciiName": "Katib Mudawwin",
+  "pythonPackage": "katib_mudawwin",
+  "pythonDistribution": "katib-mudawwin",
+  "cliCommand": "katib-mudawwin",
+  "npmPackage": "katib-mudawwin-dashboard",
+  "configDirName": "katib-mudawwin",
+  "serviceUnitName": "katib-mudawwin"
+}

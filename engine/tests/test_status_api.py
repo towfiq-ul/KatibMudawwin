@@ -1,5 +1,5 @@
-from zoom_notes_engine.models import SessionState, SessionStatus
-from zoom_notes_engine.status_api import create_app
+from katib_mudawwin.models import SessionState, SessionStatus
+from katib_mudawwin.status_api import create_app
 
 
 class FakeRecorder:

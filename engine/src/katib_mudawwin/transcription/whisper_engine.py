@@ -6,7 +6,7 @@ from typing import Optional
 import numpy as np
 from faster_whisper import WhisperModel
 
-from zoom_notes_engine.config import WhisperConfig
+from katib_mudawwin.config import WhisperConfig
 
 
 class WhisperEngine:

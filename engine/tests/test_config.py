@@ -1,12 +1,12 @@
 from pathlib import Path
 
-from zoom_notes_engine.config import AppConfig, load_config
+from katib_mudawwin.config import AppConfig, load_config
 
 
 def test_defaults_with_no_file(tmp_path):
     config = load_config(tmp_path / "does-not-exist.yaml")
     assert isinstance(config, AppConfig)
-    assert config.summarizer.provider == "ollama"
+    assert config.summarizer.provider == "local"
     assert config.whisper.model_size == "base.en"
     assert config.storage_dir.is_absolute()
 

@@ -4,9 +4,9 @@ import os
 
 import anthropic
 
-from zoom_notes_engine.config import ClaudeConfig
-from zoom_notes_engine.summarization.base import Summarizer
-from zoom_notes_engine.summarization.prompts import SUMMARY_PROMPT_TEMPLATE
+from katib_mudawwin.config import ClaudeConfig
+from katib_mudawwin.summarization.base import Summarizer
+from katib_mudawwin.summarization.prompts import SUMMARY_PROMPT_TEMPLATE
 
 
 class ClaudeSummarizer(Summarizer):

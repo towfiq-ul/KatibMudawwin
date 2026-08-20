@@ -2,13 +2,13 @@ import wave
 
 import numpy as np
 
-from zoom_notes_engine.audio.file_playback_source import FilePlaybackSource
-from zoom_notes_engine.config import AppConfig, DetectionConfig, VadConfig
-from zoom_notes_engine.detection.base import AudioActivitySnapshot
-from zoom_notes_engine.detection.detector import MeetingDetector
-from zoom_notes_engine.detection.fake_signal_source import ScriptedAudioSignalSource
-from zoom_notes_engine.session.recorder import SessionRecorder
-from zoom_notes_engine.summarization.base import Summarizer
+from katib_mudawwin.audio.file_playback_source import FilePlaybackSource
+from katib_mudawwin.config import AppConfig, DetectionConfig, VadConfig
+from katib_mudawwin.detection.base import AudioActivitySnapshot
+from katib_mudawwin.detection.detector import MeetingDetector
+from katib_mudawwin.detection.fake_signal_source import ScriptedAudioSignalSource
+from katib_mudawwin.session.recorder import SessionRecorder
+from katib_mudawwin.summarization.base import Summarizer
 
 SAMPLE_RATE = 16000
 ACTIVE = AudioActivitySnapshot(True, True, False)
@@ -53,7 +53,7 @@ def test_full_offline_pipeline_writes_transcript_and_summary(tmp_path, monkeypat
     # utterances from our synthetic tone without depending on webrtcvad's
     # real judgment of a non-speech test signal.
     monkeypatch.setattr(
-        "zoom_notes_engine.audio.vad.VoiceActivityDetector.is_speech",
+        "katib_mudawwin.audio.vad.VoiceActivityDetector.is_speech",
         lambda self, frame: True,
     )
 
@@ -108,7 +108,7 @@ def test_full_offline_pipeline_writes_transcript_and_summary(tmp_path, monkeypat
 
 def test_summarizer_failure_still_preserves_transcript(tmp_path, monkeypatch):
     monkeypatch.setattr(
-        "zoom_notes_engine.audio.vad.VoiceActivityDetector.is_speech",
+        "katib_mudawwin.audio.vad.VoiceActivityDetector.is_speech",
         lambda self, frame: True,
     )
 
@@ -129,7 +129,7 @@ def test_summarizer_failure_still_preserves_transcript(tmp_path, monkeypatch):
 
     class FailingSummarizer(Summarizer):
         def summarize(self, transcript_text: str) -> str:
-            raise RuntimeError("Ollama unreachable")
+            raise RuntimeError("summarizer unreachable")
 
     recorder = SessionRecorder(
         config=config,

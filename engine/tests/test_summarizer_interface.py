@@ -1,15 +1,15 @@
 import pytest
 
-from zoom_notes_engine.config import SummarizerConfig
-from zoom_notes_engine.summarization import get_summarizer
-from zoom_notes_engine.summarization.claude_summarizer import ClaudeSummarizer
-from zoom_notes_engine.summarization.ollama_summarizer import OllamaSummarizer
+from katib_mudawwin.config import SummarizerConfig
+from katib_mudawwin.summarization import get_summarizer
+from katib_mudawwin.summarization.claude_summarizer import ClaudeSummarizer
+from katib_mudawwin.summarization.local_summarizer import LocalSummarizer
 
 
-def test_get_summarizer_returns_ollama_by_default():
+def test_get_summarizer_returns_local_by_default():
     config = SummarizerConfig()
     summarizer = get_summarizer(config)
-    assert isinstance(summarizer, OllamaSummarizer)
+    assert isinstance(summarizer, LocalSummarizer)
 
 
 def test_get_summarizer_returns_claude_when_configured(monkeypatch):
