@@ -1,0 +1,15 @@
+{
+  "name": "zoom-notes-dashboard",
+  "version": "0.1.0",
+  "description": "Local web dashboard for browsing Zoom meeting notes/summaries and editing config",
+  "private": true,
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "js-yaml": "^4.1.0"
+  }
+}

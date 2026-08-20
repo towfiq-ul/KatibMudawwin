@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zoom-notes-engine"
+version = "0.1.0"
+description = "Local background engine for automatic Zoom meeting note-taking"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2",
+    "pyyaml>=6",
+    "psutil>=5.9",
+    "sounddevice>=0.4",
+    "numpy>=1.26",
+    "webrtcvad>=2.0.10",
+    # webrtcvad imports pkg_resources at module load time; setuptools>=80
+    # dropped it, so pin below that until webrtcvad drops the dependency.
+    "setuptools<80",
+    "faster-whisper>=1.0",
+    "flask>=3",
+    "requests>=2.31",
+    "anthropic>=0.40",
+    "pystray>=0.19",
+    "Pillow>=10",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+zoom-notes-engine = "zoom_notes_engine.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

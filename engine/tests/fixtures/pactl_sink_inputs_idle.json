@@ -1,0 +1,24 @@
+[
+  {
+    "index": 99,
+    "driver": "PipeWire",
+    "owner_module": null,
+    "client": 44,
+    "sink": 54,
+    "sample_spec": "float32le 2ch 48000Hz",
+    "channel_map": "front-left,front-right",
+    "format": "s16le",
+    "corked": true,
+    "mute": false,
+    "volume": {},
+    "buffer_latency": 0,
+    "sink_latency": 0,
+    "resample_method": null,
+    "properties": {
+      "application.name": "ZOOM VoiceEngine",
+      "application.process.binary": "zoom",
+      "application.process.id": "17976",
+      "media.name": "ZOOM VoiceEngine"
+    }
+  }
+]

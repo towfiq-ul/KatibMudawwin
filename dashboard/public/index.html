@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Zoom Notes Dashboard</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 48rem; margin: 2rem auto; padding: 0 1rem; color: #222; }
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.1rem; margin-top: 2.5rem; border-bottom: 1px solid #ddd; padding-bottom: 0.3rem; }
+    section { margin-top: 1rem; }
+    button { cursor: pointer; padding: 0.4rem 0.9rem; border: 1px solid #999; border-radius: 4px; background: #f7f7f7; }
+    button:hover { background: #eee; }
+    #engine-status { font-weight: bold; }
+    .status-recording { color: #b00; }
+    .status-idle { color: #555; }
+    .status-summarizing { color: #a60; }
+    ul#meeting-list { list-style: none; padding: 0; }
+    ul#meeting-list li { padding: 0.5rem 0; border-bottom: 1px solid #eee; cursor: pointer; }
+    ul#meeting-list li:hover { background: #fafafa; }
+    .meeting-detail { display: none; margin-top: 0.5rem; }
+    .meeting-detail.open { display: block; }
+    pre { white-space: pre-wrap; background: #f7f7f7; padding: 0.75rem; border-radius: 4px; max-height: 20rem; overflow-y: auto; }
+    label { display: block; margin-top: 0.75rem; font-size: 0.9rem; }
+    input, select { width: 100%; padding: 0.3rem; margin-top: 0.2rem; box-sizing: border-box; }
+    .muted { color: #777; font-size: 0.85rem; }
+    #config-status { margin-left: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Zoom Notes Dashboard</h1>
+
+  <section>
+    <h2>Engine status</h2>
+    <p>Status: <span id="engine-status">loading...</span></p>
+    <button id="btn-start">Start recording</button>
+    <button id="btn-stop">Stop recording</button>
+    <p class="muted" id="engine-error"></p>
+  </section>
+
+  <section>
+    <h2>Past meetings</h2>
+    <ul id="meeting-list"><li class="muted">Loading...</li></ul>
+  </section>
+
+  <section>
+    <h2>Config</h2>
+    <p class="muted" id="config-path"></p>
+    <form id="config-form">
+      <label>Storage directory
+        <input name="storage_dir" />
+      </label>
+      <label>Summarizer provider
+        <select name="summarizer.provider">
+          <option value="ollama">ollama</option>
+          <option value="claude">claude</option>
+        </select>
+      </label>
+      <label>Ollama model
+        <input name="summarizer.ollama.model" />
+      </label>
+      <label>Claude model
+        <input name="summarizer.claude.model" />
+      </label>
+      <label>Claude API key <span class="muted">(optional; overrides the env var, shown masked)</span>
+        <input name="summarizer.claude.api_key" type="password" autocomplete="off" placeholder="leave blank to keep current value" />
+      </label>
+      <label>Whisper model size
+        <input name="whisper.model_size" />
+      </label>
+      <button type="submit">Save config</button>
+      <span id="config-status"></span>
+    </form>
+  </section>
+
+  <script>
+    function getPath(obj, dottedPath) {
+      return dottedPath.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
+    }
+
+    function setPath(obj, dottedPath, value) {
+      const keys = dottedPath.split('.');
+      let node = obj;
+      for (let i = 0; i < keys.length - 1; i++) {
+        if (typeof node[keys[i]] !== 'object' || node[keys[i]] === null) node[keys[i]] = {};
+        node = node[keys[i]];
+      }
+      node[keys[keys.length - 1]] = value;
+    }
+
+    async function refreshEngineStatus() {
+      const el = document.getElementById('engine-status');
+      const errEl = document.getElementById('engine-error');
+      try {
+        const res = await fetch('/api/engine/status');
+        if (!res.ok) throw new Error('engine unreachable');
+        const data = await res.json();
+        el.textContent = data.status;
+        el.className = `status-${data.status}`;
+        errEl.textContent = '';
+      } catch (err) {
+        el.textContent = 'unreachable';
+        el.className = '';
+        errEl.textContent = 'Could not reach the engine\'s status API -- is it running?';
+      }
+    }
+
+    document.getElementById('btn-start').addEventListener('click', async () => {
+      await fetch('/api/engine/start', { method: 'POST' });
+      refreshEngineStatus();
+    });
+    document.getElementById('btn-stop').addEventListener('click', async () => {
+      await fetch('/api/engine/stop', { method: 'POST' });
+      refreshEngineStatus();
+    });
+
+    async function loadMeetings() {
+      const list = document.getElementById('meeting-list');
+      const res = await fetch('/api/meetings');
+      const meetings = await res.json();
+      list.innerHTML = '';
+      if (meetings.length === 0) {
+        list.innerHTML = '<li class="muted">No meetings recorded yet.</li>';
+        return;
+      }
+      for (const meeting of meetings) {
+        const li = document.createElement('li');
+        li.textContent = `${meeting.id}${meeting.hasSummary ? '' : ' (no summary)'}`;
+        const detail = document.createElement('div');
+        detail.className = 'meeting-detail';
+        li.appendChild(detail);
+        li.addEventListener('click', async () => {
+          const isOpen = detail.classList.contains('open');
+          document.querySelectorAll('.meeting-detail.open').forEach((d) => d.classList.remove('open'));
+          if (isOpen) return;
+          if (!detail.dataset.loaded) {
+            const r = await fetch(`/api/meetings/${meeting.id}`);
+            const data = await r.json();
+            detail.innerHTML = `
+              <h3>Transcript</h3><pre>${escapeHtml(data.transcript)}</pre>
+              <h3>Summary</h3><pre>${escapeHtml(data.summary || '(no summary)')}</pre>
+            `;
+            detail.dataset.loaded = '1';
+          }
+          detail.classList.add('open');
+        });
+        list.appendChild(li);
+      }
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    let currentConfig = {};
+
+    async function loadConfig() {
+      const res = await fetch('/api/config');
+      const data = await res.json();
+      currentConfig = data.config || {};
+      document.getElementById('config-path').textContent = `File: ${data.configPath}`;
+      const form = document.getElementById('config-form');
+      for (const el of form.elements) {
+        if (!el.name) continue;
+        const value = getPath(currentConfig, el.name);
+        if (value !== undefined) el.value = value;
+      }
+    }
+
+    document.getElementById('config-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      for (const el of form.elements) {
+        if (!el.name || !el.value) continue;
+        setPath(currentConfig, el.name, el.value);
+      }
+      const statusEl = document.getElementById('config-status');
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(currentConfig),
+      });
+      statusEl.textContent = res.ok ? 'Saved.' : 'Failed to save.';
+      setTimeout(() => { statusEl.textContent = ''; }, 3000);
+    });
+
+    refreshEngineStatus();
+    setInterval(refreshEngineStatus, 5000);
+    loadMeetings();
+    loadConfig();
+  </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+# Copy this file to ~/.config/zoom-note-taker/config.yaml and adjust as needed.
+# Any field you omit falls back to the OS-aware default baked into config.py.
+
+# Where transcripts and summaries get written.
+# Defaults: ~/ZoomNotes (Linux), ~/Documents/ZoomNotes (macOS), %USERPROFILE%\ZoomNotes (Windows)
+storage_dir: "~/ZoomNotes"
+
+detection:
+  poll_interval_seconds: 5
+  start_debounce_seconds: 5
+  end_debounce_seconds: 20
+  zoom_process_hint: "zoom"
+
+audio:
+  sample_rate: 16000
+  mic_device: null          # null = OS default input device
+  zoom_null_sink_name: "zoom_capture"
+
+vad:
+  aggressiveness: 2         # 0-3, higher = more aggressive at filtering non-speech
+  min_silence_ms: 700
+  max_utterance_seconds: 30
+
+whisper:
+  model_size: "base.en"     # base.en is a good CPU default; small.en for better accuracy
+  device: "cpu"
+  compute_type: "int8"
+
+summarizer:
+  provider: "ollama"        # "ollama" or "claude"
+  ollama:
+    base_url: "http://localhost:11434"
+    model: "phi3:3.8b-mini-128k"
+    num_ctx: 16384           # override Ollama's default context cap so long transcripts aren't truncated
+  claude:
+    model: "claude-sonnet-5"
+    api_key_env: "ANTHROPIC_API_KEY"  # used when api_key below is not set
+    api_key: null       # optional: paste a key directly instead of using the env var.
+                         # Takes precedence over api_key_env. Stored in plaintext in
+                         # this file; the dashboard masks it on display but not on disk.
+
+server:
+  status_api_host: "127.0.0.1"
+  status_api_port: 8765
+
+dashboard:
+  port: 5173
