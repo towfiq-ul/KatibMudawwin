@@ -142,6 +142,7 @@ class SessionRecorder:
             pipeline.source.stop()
         self._pipelines = []
         self._writer.close()
+        self._writer.finalize()
 
         self.state.status = SessionStatus.SUMMARIZING
         try:

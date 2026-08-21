@@ -99,8 +99,8 @@ def test_full_offline_pipeline_writes_transcript_and_summary(tmp_path, monkeypat
     assert summarizer.received is not None
     assert "utterance" in summarizer.received.lower()
 
-    transcript_files = list(storage_dir.glob("*_meeting-notes.txt"))
-    summary_files = list(storage_dir.glob("*_summary.txt"))
+    transcript_files = list(storage_dir.glob("notes/*/note_*.txt"))
+    summary_files = list(storage_dir.glob("notes/*/summary_note_*.txt"))
     assert len(transcript_files) == 1
     assert len(summary_files) == 1
     assert "SUMMARY: things were discussed." in summary_files[0].read_text()
@@ -144,8 +144,8 @@ def test_summarizer_failure_still_preserves_transcript(tmp_path, monkeypatch):
     for _ in range(6):
         recorder.run_once()
 
-    transcript_files = list(storage_dir.glob("*_meeting-notes.txt"))
-    summary_files = list(storage_dir.glob("*_summary.txt"))
+    transcript_files = list(storage_dir.glob("notes/*/note_*.txt"))
+    summary_files = list(storage_dir.glob("notes/*/summary_note_*.txt"))
     assert len(transcript_files) == 1
     assert "utterance" in transcript_files[0].read_text().lower()
     assert len(summary_files) == 0  # summarization failed, no summary written

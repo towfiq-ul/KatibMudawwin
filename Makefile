@@ -82,7 +82,10 @@ engine-stop:
 		HOST_PORT=$$($(PYTHON) -c "from katib_mudawwin.config import load_config; c = load_config(); print(c.server.status_api_host, c.server.status_api_port)" 2>/dev/null); \
 		if [ -n "$$HOST_PORT" ]; then \
 			set -- $$HOST_PORT; \
-			curl -sf -m 5 -X POST "http://$$1:$$2/stop" >/dev/null 2>&1 || true; \
+			echo "finalizing session (this can take several minutes on first run -- the"; \
+			echo "local summarizer downloads its ~2.3GB model from Hugging Face the first"; \
+			echo "time it summarizes)..."; \
+			curl -sf -m 1800 -X POST "http://$$1:$$2/stop" >/dev/null 2>&1 || true; \
 		fi; \
 		kill "$$(cat $(ENGINE_PIDFILE))" 2>/dev/null || true; \
 		rm -f $(ENGINE_PIDFILE); \

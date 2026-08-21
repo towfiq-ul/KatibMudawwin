@@ -17,8 +17,10 @@ audio:
   zoom_null_sink_name: "zoom_capture"
 
 vad:
-  aggressiveness: 2         # 0-3, higher = more aggressive at filtering non-speech
-  min_silence_ms: 700
+  aggressiveness: 1         # 0-3, higher = more aggressive at filtering non-speech;
+                             # confirmed against a real call that 2 over-segments
+                             # quieter/compressed Zoom audio mid-sentence
+  min_silence_ms: 1000
   max_utterance_seconds: 30
 
 whisper:

@@ -50,8 +50,15 @@ class AudioConfig(BaseModel):
 
 
 class VadConfig(BaseModel):
-    aggressiveness: int = 2
-    min_silence_ms: int = 700
+    # aggressiveness=2/min_silence_ms=700 (webrtcvad's stricter end) were the
+    # pre-milestone-12 guesses; confirmed against a real Zoom call over a
+    # Bluetooth headset that they over-segment mid-sentence -- the quieter,
+    # compressed call audio has enough sub-frame silence that a 700ms/strict
+    # threshold splits one sentence into two Whisper calls, each missing the
+    # other's context, measurably hurting transcription accuracy compared to
+    # letting the same audio flow as one utterance.
+    aggressiveness: int = 1
+    min_silence_ms: int = 1000
     max_utterance_seconds: float = 30
 
 

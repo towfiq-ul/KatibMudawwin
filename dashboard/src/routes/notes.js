@@ -6,49 +6,63 @@ const { getStorageDir } = require('../lib/config');
 
 const router = express.Router();
 
-// Meeting ids are exactly the timestamp prefix the engine generates
-// (YYYY-MM-DD_HH-MM-SS) -- validating against this before building a file
-// path prevents path traversal via a crafted :id.
-const MEETING_ID_PATTERN = /^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}$/;
+const NOTES_ROOT = 'notes';
 
-function listMeetings() {
+// Validating these before building a file path prevents path traversal via
+// a crafted :date/:file -- only note_*.txt (the per-meeting transcript) is
+// exposed here, not the shared per-day summary_note_*.txt.
+const DATE_DIR_PATTERN = /^\d{8}$/;
+const NOTE_FILE_PATTERN = /^note_\d{8}_\d{6}\.txt$/;
+
+function listDateDirs() {
   const storageDir = getStorageDir();
-  if (!fs.existsSync(storageDir)) return [];
-  const files = fs.readdirSync(storageDir);
-  return files
-    .filter((f) => f.endsWith('_meeting-notes.txt'))
-    .map((f) => {
-      const id = f.slice(0, -'_meeting-notes.txt'.length);
-      const summaryFile = `${id}_summary.txt`;
-      return { id, hasSummary: files.includes(summaryFile) };
-    })
-    .filter((m) => MEETING_ID_PATTERN.test(m.id))
-    .sort((a, b) => (a.id < b.id ? 1 : -1));
+  const notesRoot = path.join(storageDir, NOTES_ROOT);
+  if (!fs.existsSync(notesRoot)) return [];
+  return fs
+    .readdirSync(notesRoot)
+    .filter(
+      (d) => DATE_DIR_PATTERN.test(d) && fs.statSync(path.join(notesRoot, d)).isDirectory()
+    )
+    .sort((a, b) => (a < b ? 1 : -1));
 }
 
-router.get('/api/meetings', (req, res) => {
-  res.json(listMeetings());
+function listNoteFiles(date) {
+  const storageDir = getStorageDir();
+  const dirPath = path.join(storageDir, NOTES_ROOT, date);
+  if (!fs.existsSync(dirPath)) return null;
+  return fs
+    .readdirSync(dirPath)
+    .filter((f) => NOTE_FILE_PATTERN.test(f))
+    .sort((a, b) => (a < b ? 1 : -1));
+}
+
+router.get('/api/notes', (req, res) => {
+  res.json(listDateDirs());
 });
 
-router.get('/api/meetings/:id', (req, res) => {
-  const { id } = req.params;
-  if (!MEETING_ID_PATTERN.test(id)) {
-    return res.status(400).json({ error: 'invalid meeting id' });
+router.get('/api/notes/:date', (req, res) => {
+  const { date } = req.params;
+  if (!DATE_DIR_PATTERN.test(date)) {
+    return res.status(400).json({ error: 'invalid date' });
   }
+  const files = listNoteFiles(date);
+  if (files === null) {
+    return res.status(404).json({ error: 'date not found' });
+  }
+  res.json(files);
+});
 
+router.get('/api/notes/:date/:file', (req, res) => {
+  const { date, file } = req.params;
+  if (!DATE_DIR_PATTERN.test(date) || !NOTE_FILE_PATTERN.test(file)) {
+    return res.status(400).json({ error: 'invalid path' });
+  }
   const storageDir = getStorageDir();
-  const transcriptPath = path.join(storageDir, `${id}_meeting-notes.txt`);
-  const summaryPath = path.join(storageDir, `${id}_summary.txt`);
-
-  if (!fs.existsSync(transcriptPath)) {
-    return res.status(404).json({ error: 'meeting not found' });
+  const filePath = path.join(storageDir, NOTES_ROOT, date, file);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'note not found' });
   }
-
-  res.json({
-    id,
-    transcript: fs.readFileSync(transcriptPath, 'utf8'),
-    summary: fs.existsSync(summaryPath) ? fs.readFileSync(summaryPath, 'utf8') : null,
-  });
+  res.json({ content: fs.readFileSync(filePath, 'utf8') });
 });
 
 module.exports = router;

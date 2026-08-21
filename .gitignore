@@ -18,6 +18,9 @@ npm-debug.log*
 ZoomNotes/
 *.wav
 *.raw
+test_notes.txt
+/note.txt
+/notes/
 
 # OS
 .DS_Store

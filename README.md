@@ -37,9 +37,13 @@ make dashboard-run       # start the dashboard in the foreground on http://local
 
 The engine polls for an active Zoom audio signal via `pactl`, and once a
 meeting is detected, captures your mic + Zoom's own output, transcribes
-them locally with Whisper, and writes `<timestamp>_meeting-notes.txt` /
-`<timestamp>_summary.txt` to `storage_dir` when the meeting ends. A tray
-icon and the dashboard both offer a manual Start/Stop override.
+them locally with Whisper, and writes the live transcript to a fixed
+`note.txt` at the root of `storage_dir` while the meeting is in progress.
+When the meeting ends, that file is moved into its permanent
+`notes/<yyyymmdd>/note_<yyyymmdd_hhmmss>.txt` location and its summary is
+appended to that day's shared `notes/<yyyymmdd>/summary_note_<yyyymmdd>.txt`.
+Timestamps are always CST/CDT regardless of the system's local timezone. A
+tray icon and the dashboard both offer a manual Start/Stop override.
 
 `-run` starts each service in the foreground, blocking the terminal
 with its live log output -- use it while developing. To run them as

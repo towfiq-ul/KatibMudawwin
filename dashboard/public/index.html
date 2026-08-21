@@ -14,16 +14,24 @@
     .status-recording { color: #b00; }
     .status-idle { color: #555; }
     .status-summarizing { color: #a60; }
-    ul#meeting-list { list-style: none; padding: 0; }
-    ul#meeting-list li { padding: 0.5rem 0; border-bottom: 1px solid #eee; cursor: pointer; }
-    ul#meeting-list li:hover { background: #fafafa; }
-    .meeting-detail { display: none; margin-top: 0.5rem; }
-    .meeting-detail.open { display: block; }
     pre { white-space: pre-wrap; background: #f7f7f7; padding: 0.75rem; border-radius: 4px; max-height: 20rem; overflow-y: auto; }
     label { display: block; margin-top: 0.75rem; font-size: 0.9rem; }
     input, select { width: 100%; padding: 0.3rem; margin-top: 0.2rem; box-sizing: border-box; }
     .muted { color: #777; font-size: 0.85rem; }
     #config-status { margin-left: 0.5rem; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; z-index: 100; }
+    .modal-overlay[hidden] { display: none; }
+    #note-content-modal { z-index: 200; }
+    .modal { background: #fff; border-radius: 6px; width: min(32rem, 90vw); max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); }
+    .modal-header { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; border-bottom: 1px solid #eee; }
+    .modal-header h3 { margin: 0; flex: 1; font-size: 1rem; }
+    .link-btn { background: none; border: none; color: #06c; padding: 0; cursor: pointer; }
+    .close-btn { background: none; border: none; font-size: 1.3rem; line-height: 1; cursor: pointer; color: #777; padding: 0 0.25rem; }
+    .modal-list { list-style: none; margin: 0; padding: 0.5rem 0; overflow-y: auto; }
+    .modal-list li { padding: 0.6rem 1rem; cursor: pointer; }
+    .modal-list li:hover { background: #fafafa; }
+    #note-content-modal pre { max-height: none; margin: 1rem; }
   </style>
 </head>
 <body>
@@ -38,9 +46,30 @@
   </section>
 
   <section>
-    <h2>Past meetings</h2>
-    <ul id="meeting-list"><li class="muted">Loading...</li></ul>
+    <h2>Notes</h2>
+    <button id="btn-browse-notes">Browse notes</button>
   </section>
+
+  <div id="notes-modal" class="modal-overlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <button id="notes-back" class="link-btn" hidden>&larr; Back</button>
+        <h3 id="notes-modal-title">Notes by date</h3>
+        <button id="notes-modal-close" class="close-btn" aria-label="Close">&times;</button>
+      </div>
+      <ul id="notes-modal-list" class="modal-list"></ul>
+    </div>
+  </div>
+
+  <div id="note-content-modal" class="modal-overlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="note-content-title"></h3>
+        <button id="note-content-close" class="close-btn" aria-label="Close">&times;</button>
+      </div>
+      <pre id="note-content-body"></pre>
+    </div>
+  </div>
 
   <section>
     <h2>Config</h2>
@@ -126,45 +155,81 @@
       refreshEngineStatus();
     });
 
-    async function loadMeetings() {
-      const list = document.getElementById('meeting-list');
-      const res = await fetch('/api/meetings');
-      const meetings = await res.json();
-      list.innerHTML = '';
-      if (meetings.length === 0) {
-        list.innerHTML = '<li class="muted">No meetings recorded yet.</li>';
+    const notesModal = document.getElementById('notes-modal');
+    const notesModalList = document.getElementById('notes-modal-list');
+    const notesModalTitle = document.getElementById('notes-modal-title');
+    const notesBackBtn = document.getElementById('notes-back');
+    const noteContentModal = document.getElementById('note-content-modal');
+    const noteContentTitle = document.getElementById('note-content-title');
+    const noteContentBody = document.getElementById('note-content-body');
+
+    function formatDate(yyyymmdd) {
+      return `${yyyymmdd.slice(0, 4)}-${yyyymmdd.slice(4, 6)}-${yyyymmdd.slice(6, 8)}`;
+    }
+
+    function formatNoteLabel(filename) {
+      const m = filename.match(/^note_\d{8}_(\d{2})(\d{2})(\d{2})\.txt$/);
+      return m ? `${m[1]}:${m[2]}:${m[3]}` : filename;
+    }
+
+    async function renderDateList() {
+      notesBackBtn.hidden = true;
+      notesModalTitle.textContent = 'Notes by date';
+      notesModalList.innerHTML = '<li class="muted">Loading...</li>';
+      const res = await fetch('/api/notes');
+      const dates = await res.json();
+      notesModalList.innerHTML = '';
+      if (dates.length === 0) {
+        notesModalList.innerHTML = '<li class="muted">No notes yet.</li>';
         return;
       }
-      for (const meeting of meetings) {
+      for (const date of dates) {
         const li = document.createElement('li');
-        li.textContent = `${meeting.id}${meeting.hasSummary ? '' : ' (no summary)'}`;
-        const detail = document.createElement('div');
-        detail.className = 'meeting-detail';
-        li.appendChild(detail);
-        li.addEventListener('click', async () => {
-          const isOpen = detail.classList.contains('open');
-          document.querySelectorAll('.meeting-detail.open').forEach((d) => d.classList.remove('open'));
-          if (isOpen) return;
-          if (!detail.dataset.loaded) {
-            const r = await fetch(`/api/meetings/${meeting.id}`);
-            const data = await r.json();
-            detail.innerHTML = `
-              <h3>Transcript</h3><pre>${escapeHtml(data.transcript)}</pre>
-              <h3>Summary</h3><pre>${escapeHtml(data.summary || '(no summary)')}</pre>
-            `;
-            detail.dataset.loaded = '1';
-          }
-          detail.classList.add('open');
-        });
-        list.appendChild(li);
+        li.textContent = formatDate(date);
+        li.addEventListener('click', () => renderFileList(date));
+        notesModalList.appendChild(li);
       }
     }
 
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
+    async function renderFileList(date) {
+      notesBackBtn.hidden = false;
+      notesModalTitle.textContent = formatDate(date);
+      notesModalList.innerHTML = '<li class="muted">Loading...</li>';
+      const res = await fetch(`/api/notes/${date}`);
+      const files = await res.json();
+      notesModalList.innerHTML = '';
+      if (files.length === 0) {
+        notesModalList.innerHTML = '<li class="muted">No notes for this day.</li>';
+        return;
+      }
+      for (const file of files) {
+        const li = document.createElement('li');
+        li.textContent = formatNoteLabel(file);
+        li.addEventListener('click', () => openNoteContent(date, file));
+        notesModalList.appendChild(li);
+      }
     }
+
+    async function openNoteContent(date, file) {
+      noteContentTitle.textContent = `${formatDate(date)} ${formatNoteLabel(file)}`;
+      noteContentBody.textContent = 'Loading...';
+      noteContentModal.hidden = false;
+      const res = await fetch(`/api/notes/${date}/${file}`);
+      const data = await res.json();
+      noteContentBody.textContent = data.content;
+    }
+
+    document.getElementById('btn-browse-notes').addEventListener('click', () => {
+      notesModal.hidden = false;
+      renderDateList();
+    });
+    notesBackBtn.addEventListener('click', renderDateList);
+    document.getElementById('notes-modal-close').addEventListener('click', () => {
+      notesModal.hidden = true;
+    });
+    document.getElementById('note-content-close').addEventListener('click', () => {
+      noteContentModal.hidden = true;
+    });
 
     let currentConfig = {};
 
@@ -201,7 +266,6 @@
     loadBranding();
     refreshEngineStatus();
     setInterval(refreshEngineStatus, 5000);
-    loadMeetings();
     loadConfig();
   </script>
 </body>

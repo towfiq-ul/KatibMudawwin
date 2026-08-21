@@ -17,8 +17,7 @@ logger = logging.getLogger(__name__)
 class ZoomLoopbackSource(AudioSource):
     """Captures Zoom's own output via a dedicated PulseAudio/PipeWire null
     sink + parec, so only Zoom's audio is captured (not unrelated system
-    sounds) while you still hear the meeting normally through a loopback
-    back to the default sink.
+    sounds).
 
     Creating the null sink doesn't make Zoom play into it -- Zoom keeps
     streaming to whatever sink was already its default. We have to actively
@@ -33,7 +32,17 @@ class ZoomLoopbackSource(AudioSource):
     `node.dont-reconnect=true`, which silently blocks both the pulse-compat
     move and a plain metadata-based reroute. `_link_pipewire_ports` works
     around that by linking the stream's ports directly with `pw-link`,
-    which -- unlike the pulse-compat move -- isn't blocked by the pin.
+    which -- unlike the pulse-compat move -- isn't blocked by the pin. That
+    fan-out link is additive (it doesn't disturb Zoom's existing connection
+    to your actual output device), so unlike a real `move-sink-input`,
+    nothing here ever silences what you'd normally hear -- there's
+    deliberately no loopback-back-to-default-sink to "restore" audio,
+    since one isn't needed and would just play a second, duplicate copy
+    through whatever PulseAudio considers the default sink (confirmed
+    against a real call: that's not reliably the device Zoom's audio is
+    actually going to, e.g. a Bluetooth headset that isn't the system
+    default sink -- the duplicate copy played through the laptop speaker
+    at the same time).
     """
 
     def __init__(self, sink_name: str, sample_rate: int = 16000, process_hint: str = "zoom"):
@@ -41,7 +50,6 @@ class ZoomLoopbackSource(AudioSource):
         self.sample_rate = sample_rate
         self.process_hint = process_hint.lower()
         self._null_sink_module_id: Optional[str] = None
-        self._loopback_module_id: Optional[str] = None
         self._proc: Optional[subprocess.Popen] = None
         self._buffer = bytearray()
         self._lock = threading.Lock()
@@ -57,14 +65,10 @@ class ZoomLoopbackSource(AudioSource):
     def start(self) -> None:
         self._stopped.clear()
         self._null_sink_module_id = self._pactl(
-            "load-module", "module-null-sink", f"sink_name={self.sink_name}"
-        )
-        default_sink = self._pactl("get-default-sink")
-        self._loopback_module_id = self._pactl(
             "load-module",
-            "module-loopback",
-            f"source={self.sink_name}.monitor",
-            f"sink={default_sink}",
+            "module-null-sink",
+            f"sink_name={self.sink_name}",
+            "channel_map=mono",
         )
         self._proc = subprocess.Popen(
             [
@@ -119,7 +123,8 @@ class ZoomLoopbackSource(AudioSource):
             )
             if not moved:
                 node_name = props.get("node.name") or props.get("application.name")
-                moved = bool(node_name) and self._link_pipewire_ports(node_name)
+                node_id = props.get("object.id")
+                moved = bool(node_name) and self._link_pipewire_ports(node_name, node_id)
 
             if moved:
                 if index not in self._routed_indices:
@@ -136,23 +141,52 @@ class ZoomLoopbackSource(AudioSource):
                     self.sink_name,
                 )
 
-    def _link_pipewire_ports(self, node_name: str) -> bool:
+    def _link_pipewire_ports(self, node_name: str, node_id: Optional[object]) -> bool:
         """Directly wires a PipeWire stream's ports to our null sink's ports
         with `pw-link`, bypassing whatever routing target the stream itself
         is pinned to. PipeWire ports fan out, so this doesn't disturb
         wherever the stream is already connected (e.g. the user's speakers).
+
+        Zoom runs its mic-capture stream and its speaker-output stream as
+        two distinct PipeWire nodes that share the exact same `node.name`
+        ("ZOOM VoiceEngine" on the build this was confirmed against) --
+        confirmed against a real Zoom snap build in a live call. Matching
+        ports by name prefix alone (via `pw-link -o`) can't tell them apart
+        and picks up the mic-capture node's `monitor_*` port (a tap of your
+        own voice) alongside the real output port, leaking your own mic
+        into the "Others" capture stream. Scoping the port lookup to the
+        specific PipeWire node id of the sink-input we're moving (from
+        pactl's `object.id` property) avoids that ambiguity.
         """
         try:
-            out_ports = subprocess.run(
-                ["pw-link", "-o"], capture_output=True, text=True, timeout=5, check=True
-            ).stdout.splitlines()
+            dump = subprocess.run(
+                ["pw-dump"], capture_output=True, text=True, timeout=5, check=True
+            ).stdout
+            objects = json.loads(dump)
             in_ports = subprocess.run(
                 ["pw-link", "-i"], capture_output=True, text=True, timeout=5, check=True
             ).stdout.splitlines()
-        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+        except (
+            subprocess.CalledProcessError,
+            FileNotFoundError,
+            subprocess.TimeoutExpired,
+            json.JSONDecodeError,
+        ):
             return False
 
-        src_ports = sorted(p for p in out_ports if p.startswith(f"{node_name}:"))
+        src_ports = []
+        for obj in objects:
+            if obj.get("type") != "PipeWire:Interface:Port":
+                continue
+            props = (obj.get("info") or {}).get("props") or {}
+            if node_id is not None and str(props.get("node.id")) != str(node_id):
+                continue
+            if props.get("port.direction") != "out":
+                continue
+            port_name = props.get("port.name")
+            if port_name:
+                src_ports.append(f"{node_name}:{port_name}")
+        src_ports.sort()
         dst_ports = sorted(p for p in in_ports if p.startswith(f"{self.sink_name}:"))
         if not src_ports or not dst_ports:
             return False
@@ -202,8 +236,6 @@ class ZoomLoopbackSource(AudioSource):
             self._reader_thread.join(timeout=2)
         if self._mover_thread is not None:
             self._mover_thread.join(timeout=2)
-        if self._loopback_module_id:
-            subprocess.run(["pactl", "unload-module", self._loopback_module_id], check=False)
         if self._null_sink_module_id:
             subprocess.run(["pactl", "unload-module", self._null_sink_module_id], check=False)
 
