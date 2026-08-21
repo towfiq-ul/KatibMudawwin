@@ -74,30 +74,16 @@ def test_new_session_truncates_leftover_working_file(tmp_path):
         writer.close()
 
 
-def test_write_summary(tmp_path):
-    started_at = datetime(2026, 8, 20, 14, 30, 0, tzinfo=CST)
-    writer = TranscriptWriter(tmp_path, started_at)
-    try:
-        writer.write_summary("- Discussed the roadmap.\n- Action: Alice to follow up.\n")
-        assert "Alice to follow up" in writer.summary_path.read_text(encoding="utf-8")
-    finally:
-        writer.close()
-
-
-def test_write_summary_appends_across_meetings_same_day(tmp_path):
-    """Every meeting's summary on a given day lands in one shared
-    summary_note_<yyyymmdd>.txt rather than getting its own file."""
+def test_summary_path_is_shared_across_meetings_same_day(tmp_path):
+    """summary_path is precomputed per the day, not per meeting -- see
+    summarize_notes.py, which is what actually writes to it."""
     first = TranscriptWriter(tmp_path, datetime(2026, 8, 20, 9, 0, 0, tzinfo=CST))
-    first.write_summary("First meeting summary.")
     first.close()
     first.finalize()
 
     second = TranscriptWriter(tmp_path, datetime(2026, 8, 20, 15, 0, 0, tzinfo=CST))
-    second.write_summary("Second meeting summary.")
     second.close()
     second.finalize()
 
     assert first.summary_path == second.summary_path
-    text = second.summary_path.read_text(encoding="utf-8")
-    assert "First meeting summary." in text
-    assert "Second meeting summary." in text
+    assert first.summary_path == tmp_path / "notes" / "20260820" / "summary_note_20260820.txt"

@@ -24,9 +24,13 @@ class TranscriptWriter:
     while a meeting is in progress -- flushing and fsyncing after every
     write so a crash mid-meeting doesn't lose progress made so far -- then
     finalize() moves it into its permanent storage_dir/notes/<yyyymmdd>/
-    note_<timestamp>.txt location once the meeting ends. Every meeting's
-    summary on a given day is appended to that day's single shared
-    summary_note_<yyyymmdd>.txt rather than getting its own file.
+    note_<timestamp>.txt location once the meeting ends.
+
+    Summarization is not done here -- it's a separate, on-demand step (see
+    summarize_notes.py) run via `make summary` rather than automatically on
+    stop. summary_path is precomputed so callers (e.g. the status API) can
+    show where a summary will land once one is generated, but this class
+    never writes to it.
 
     Note: since the working file has a fixed name, a crash before
     finalize() leaves that meeting's transcript un-relocated at
@@ -70,12 +74,3 @@ class TranscriptWriter:
         self._final_transcript_path.parent.mkdir(parents=True, exist_ok=True)
         self.transcript_path.replace(self._final_transcript_path)
         self.transcript_path = self._final_transcript_path
-
-    def read_transcript_text(self) -> str:
-        return self.transcript_path.read_text(encoding="utf-8")
-
-    def write_summary(self, summary_text: str) -> None:
-        header = f"Meeting at {self.started_at.isoformat(timespec='seconds')}"
-        block = f"{header}\n{'-' * len(header)}\n{summary_text.rstrip()}\n\n"
-        with open(self.summary_path, "a", encoding="utf-8") as f:
-            f.write(block)

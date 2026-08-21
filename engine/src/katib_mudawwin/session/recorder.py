@@ -13,7 +13,6 @@ from katib_mudawwin.detection.detector import MeetingDetector
 from katib_mudawwin.models import AudioSource as AudioSourceLabel
 from katib_mudawwin.models import SessionState, SessionStatus, TranscriptEntry
 from katib_mudawwin.session.writer import TranscriptWriter
-from katib_mudawwin.summarization import Summarizer, get_summarizer
 from katib_mudawwin.transcription.whisper_engine import WhisperEngine
 
 logger = logging.getLogger(__name__)
@@ -64,10 +63,12 @@ class _StreamPipeline:
 
 class SessionRecorder:
     """Orchestrates one meeting's worth of detection -> capture -> VAD ->
-    transcription -> summarization, driven by repeated run_once() calls (a
-    real loop in production via run_forever(), or back-to-back calls
-    against fake detectors/audio sources in tests -- see
-    test_session_recorder.py, which exercises the whole pipeline offline)."""
+    transcription, driven by repeated run_once() calls (a real loop in
+    production via run_forever(), or back-to-back calls against fake
+    detectors/audio sources in tests -- see test_session_recorder.py, which
+    exercises the whole pipeline offline). Summarization is a separate,
+    on-demand step (`make summary` / katib_mudawwin.summarize_notes), not
+    part of this lifecycle -- see summarize_notes.py for why."""
 
     def __init__(
         self,
@@ -76,7 +77,6 @@ class SessionRecorder:
         mic_source_factory: Callable[[], AudioSource],
         zoom_source_factory: Callable[[], AudioSource],
         whisper: WhisperEngine,
-        summarizer: Optional[Summarizer] = None,
         frame_ms: float = 20,
     ):
         self.config = config
@@ -84,7 +84,6 @@ class SessionRecorder:
         self._mic_source_factory = mic_source_factory
         self._zoom_source_factory = zoom_source_factory
         self.whisper = whisper
-        self.summarizer = summarizer or get_summarizer(config.summarizer)
         self.frame_ms = frame_ms
         self.state = SessionState()
         self._writer: Optional[TranscriptWriter] = None
@@ -143,19 +142,6 @@ class SessionRecorder:
         self._pipelines = []
         self._writer.close()
         self._writer.finalize()
-
-        self.state.status = SessionStatus.SUMMARIZING
-        try:
-            transcript_text = self._writer.read_transcript_text()
-            summary = self.summarizer.summarize(transcript_text)
-            self._writer.write_summary(summary)
-            logger.info("Summary written to %s", self._writer.summary_path)
-        except Exception:
-            logger.exception(
-                "Summarization failed -- transcript is preserved at %s; "
-                "it can be retried later without losing the transcript.",
-                self._writer.transcript_path,
-            )
 
         logger.info("Meeting ended, transcript at %s", self._writer.transcript_path)
         self._writer = None

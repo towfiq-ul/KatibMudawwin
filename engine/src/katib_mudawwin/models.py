@@ -25,7 +25,6 @@ class TranscriptEntry:
 class SessionStatus(str, Enum):
     IDLE = "idle"
     RECORDING = "recording"
-    SUMMARIZING = "summarizing"
 
 
 @dataclass

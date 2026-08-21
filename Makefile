@@ -25,6 +25,7 @@ help:
 	@echo "  make dashboard-stop   Stop the background dashboard"
 	@echo "  make start            engine-start + dashboard-start"
 	@echo "  make stop             engine-stop + dashboard-stop"
+	@echo "  make summary [DATE]   Summarize a day's notes (yyyymmdd, default: today in CST)"
 	@echo "  make status           Check which project services are running (engine, dashboard)"
 	@echo "  make clean            Remove venv, node_modules, and caches"
 
@@ -82,10 +83,7 @@ engine-stop:
 		HOST_PORT=$$($(PYTHON) -c "from katib_mudawwin.config import load_config; c = load_config(); print(c.server.status_api_host, c.server.status_api_port)" 2>/dev/null); \
 		if [ -n "$$HOST_PORT" ]; then \
 			set -- $$HOST_PORT; \
-			echo "finalizing session (this can take several minutes on first run -- the"; \
-			echo "local summarizer downloads its ~2.3GB model from Hugging Face the first"; \
-			echo "time it summarizes)..."; \
-			curl -sf -m 1800 -X POST "http://$$1:$$2/stop" >/dev/null 2>&1 || true; \
+			curl -sf -m 30 -X POST "http://$$1:$$2/stop" >/dev/null 2>&1 || true; \
 		fi; \
 		kill "$$(cat $(ENGINE_PIDFILE))" 2>/dev/null || true; \
 		rm -f $(ENGINE_PIDFILE); \
@@ -119,6 +117,16 @@ start: engine-start dashboard-start
 
 .PHONY: stop
 stop: engine-stop dashboard-stop
+
+.PHONY: summary
+summary:
+	@$(PYTHON) -m katib_mudawwin.summarize_notes $(filter-out summary,$(MAKECMDGOALS))
+
+# Swallows the optional trailing date arg in `make summary 20260821` as a
+# harmless no-op target, instead of Make trying (and failing) to build a
+# real target named "20260821".
+%:
+	@:
 
 .PHONY: status
 status:
