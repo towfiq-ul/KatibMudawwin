@@ -27,3 +27,7 @@ test_notes.txt
 
 # Claude Code session transcripts (e.g. 2026-08-20-040455-....txt)
 [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-*.txt
+
+# Claude Code project instructions -- kept locally, never committed/pushed
+/CLAUDE.md
+/.claude/
