@@ -80,17 +80,17 @@
       <label>Summarizer provider
         <select name="summarizer.provider">
           <option value="local">local (Phi-3, offline)</option>
-          <option value="claude">claude</option>
+          <option value="anthropic">anthropic (Claude API)</option>
         </select>
       </label>
       <label>Local model <span class="muted">(Hugging Face repo id, GGUF)</span>
         <input name="summarizer.local.repo_id" />
       </label>
-      <label>Claude model
-        <input name="summarizer.claude.model" />
+      <label>Anthropic model
+        <input name="summarizer.anthropic.model" />
       </label>
-      <label>Claude API key <span class="muted">(optional; overrides the env var, shown masked)</span>
-        <input name="summarizer.claude.api_key" type="password" autocomplete="off" placeholder="leave blank to keep current value" />
+      <label>Anthropic API key <span class="muted">(optional; overrides the env var, shown masked)</span>
+        <input name="summarizer.anthropic.api_key" type="password" autocomplete="off" placeholder="leave blank to keep current value" />
       </label>
       <label>Whisper model size
         <input name="whisper.model_size" />

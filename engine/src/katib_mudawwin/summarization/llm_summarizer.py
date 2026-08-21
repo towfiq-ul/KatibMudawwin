@@ -4,20 +4,20 @@ import os
 
 import anthropic
 
-from katib_mudawwin.config import ClaudeConfig
+from katib_mudawwin.config import AnthropicConfig
 from katib_mudawwin.summarization.base import Summarizer
 from katib_mudawwin.summarization.prompts import SUMMARY_PROMPT_TEMPLATE
 
 
-class ClaudeSummarizer(Summarizer):
-    def __init__(self, config: ClaudeConfig):
+class LlmSummarizer(Summarizer):
+    def __init__(self, config: AnthropicConfig):
         self.config = config
         api_key = config.api_key or os.environ.get(config.api_key_env)
         if not api_key:
             raise RuntimeError(
-                f"Neither summarizer.claude.api_key nor the "
+                f"Neither summarizer.anthropic.api_key nor the "
                 f"{config.api_key_env} environment variable is set; "
-                "one of them is required to use Claude for summarization."
+                "one of them is required to use the Anthropic API for summarization."
             )
         self.client = anthropic.Anthropic(api_key=api_key)
 

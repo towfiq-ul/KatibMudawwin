@@ -7,14 +7,13 @@ summary to timestamped `.txt` files.
 
 It is **not** a published Zoom Marketplace app — it works by capturing audio
 locally, since Zoom's live-captions API (RTMS) requires a Business/Enterprise
-plan. See `/home/towfiq/.claude/plans/compiled-riding-anchor.md` (or ask Claude)
-for the full design.
+plan.
 
 ## Components
 
 - `engine/` — Python background engine: meeting detection, audio capture, VAD,
-  Whisper transcription, summarization (local Phi-3 or Claude), file writer,
-  tray icon, local status API.
+  Whisper transcription, summarization (local Phi-3 or Anthropic API), file
+  writer, tray icon, local status API.
 - `dashboard/` — Node.js local web UI for browsing past notes/summaries and
   editing config.
 
@@ -23,8 +22,7 @@ for the full design.
 Milestones 1–11 (scaffolding through dashboard/polish) are implemented.
 Milestone 12 -- validating the real Zoom detection/audio-capture code
 against an actual live meeting, and tuning debounce thresholds -- is the
-one remaining step, and needs a real or test Zoom call to do (see the
-design doc).
+one remaining step, and needs a real or test Zoom call to do.
 
 ## Running it (Linux)
 
@@ -78,8 +76,8 @@ sudo apt install pulseaudio-utils ffmpeg libportaudio2
 Summarization defaults to a local Phi-3 model, running in-process via
 llama-cpp-python -- no separate service to install or start. The GGUF
 weights (~2.3GB) download once from Hugging Face Hub and are cached the
-first time a meeting is summarized. For Claude API summarization instead,
-set `summarizer.provider: claude` in your config and set
+first time a meeting is summarized. For Anthropic API summarization instead,
+set `summarizer.provider: anthropic` in your config and set
 `ANTHROPIC_API_KEY` in your environment.
 
 ## macOS / Windows differences (documented, not yet implemented/tested)

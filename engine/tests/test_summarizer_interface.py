@@ -2,7 +2,7 @@ import pytest
 
 from katib_mudawwin.config import SummarizerConfig
 from katib_mudawwin.summarization import get_summarizer
-from katib_mudawwin.summarization.claude_summarizer import ClaudeSummarizer
+from katib_mudawwin.summarization.llm_summarizer import LlmSummarizer
 from katib_mudawwin.summarization.local_summarizer import LocalSummarizer
 
 
@@ -12,16 +12,16 @@ def test_get_summarizer_returns_local_by_default():
     assert isinstance(summarizer, LocalSummarizer)
 
 
-def test_get_summarizer_returns_claude_when_configured(monkeypatch):
+def test_get_summarizer_returns_llm_when_configured(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
-    config = SummarizerConfig(provider="claude")
+    config = SummarizerConfig(provider="anthropic")
     summarizer = get_summarizer(config)
-    assert isinstance(summarizer, ClaudeSummarizer)
+    assert isinstance(summarizer, LlmSummarizer)
 
 
-def test_claude_summarizer_requires_api_key(monkeypatch):
+def test_llm_summarizer_requires_api_key(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    config = SummarizerConfig(provider="claude")
+    config = SummarizerConfig(provider="anthropic")
     with pytest.raises(RuntimeError, match="ANTHROPIC_API_KEY"):
         get_summarizer(config)
 

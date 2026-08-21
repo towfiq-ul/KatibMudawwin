@@ -29,13 +29,13 @@ whisper:
   compute_type: "int8"
 
 summarizer:
-  provider: "local"         # "local" (Phi-3, runs in-process) or "claude"
+  provider: "local"         # "local" (Phi-3, runs in-process) or "anthropic"
   local:
     repo_id: "microsoft/Phi-3-mini-4k-instruct-gguf"
     filename: "*q4.gguf"    # glob pattern; weights auto-download and cache on first use
     n_ctx: 4096
     n_threads: null         # null = let llama.cpp pick based on available cores
-  claude:
+  anthropic:
     model: "claude-sonnet-5"
     api_key_env: "ANTHROPIC_API_KEY"  # used when api_key below is not set
     api_key: null       # optional: paste a key directly instead of using the env var.

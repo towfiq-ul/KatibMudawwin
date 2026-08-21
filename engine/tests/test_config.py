@@ -14,11 +14,11 @@ def test_defaults_with_no_file(tmp_path):
 def test_partial_override_keeps_other_defaults(tmp_path):
     config_path = tmp_path / "config.yaml"
     config_path.write_text(
-        "summarizer:\n  provider: claude\n  claude:\n    model: claude-sonnet-5\n"
+        "summarizer:\n  provider: anthropic\n  anthropic:\n    model: claude-sonnet-5\n"
     )
     config = load_config(config_path)
-    assert config.summarizer.provider == "claude"
-    assert config.summarizer.claude.model == "claude-sonnet-5"
+    assert config.summarizer.provider == "anthropic"
+    assert config.summarizer.anthropic.model == "claude-sonnet-5"
     # Untouched sections still fall back to defaults.
     assert config.whisper.model_size == "base.en"
     assert config.audio.sample_rate == 16000

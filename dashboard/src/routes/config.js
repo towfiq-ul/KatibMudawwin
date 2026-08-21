@@ -7,8 +7,8 @@ const router = express.Router();
 router.get('/api/config', (req, res) => {
   const { configPath, raw } = loadConfig();
   const masked = JSON.parse(JSON.stringify(raw));
-  const apiKey = masked?.summarizer?.claude?.api_key;
-  if (apiKey) masked.summarizer.claude.api_key = maskSecret(apiKey);
+  const apiKey = masked?.summarizer?.anthropic?.api_key;
+  if (apiKey) masked.summarizer.anthropic.api_key = maskSecret(apiKey);
   res.json({ configPath, config: masked });
 });
 
@@ -16,7 +16,7 @@ router.get('/api/config', (req, res) => {
 // current config, edits it client-side, and posts the whole object back.
 // This sidesteps any ambiguity about how to merge nested keys.
 //
-// The GET above masks summarizer.claude.api_key, and the dashboard form has
+// The GET above masks summarizer.anthropic.api_key, and the dashboard form has
 // no input for it, so an unrelated edit's save would otherwise write that
 // mask string over the real key. If the incoming value still matches the
 // mask of what's on disk, keep the real on-disk key instead.
@@ -25,10 +25,10 @@ router.post('/api/config', (req, res) => {
   if (typeof config !== 'object' || config === null || Array.isArray(config)) {
     return res.status(400).json({ error: 'body must be a JSON object' });
   }
-  const existingKey = loadConfig().raw?.summarizer?.claude?.api_key;
-  const incomingKey = config?.summarizer?.claude?.api_key;
+  const existingKey = loadConfig().raw?.summarizer?.anthropic?.api_key;
+  const incomingKey = config?.summarizer?.anthropic?.api_key;
   if (existingKey && incomingKey === maskSecret(existingKey)) {
-    config.summarizer.claude.api_key = existingKey;
+    config.summarizer.anthropic.api_key = existingKey;
   }
   saveConfig(config);
   res.json({ config });

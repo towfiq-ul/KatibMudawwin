@@ -81,7 +81,7 @@ class LocalLlmConfig(BaseModel):
     n_threads: Optional[int] = None
 
 
-class ClaudeConfig(BaseModel):
+class AnthropicConfig(BaseModel):
     model: str = "claude-sonnet-5"
     api_key_env: str = "ANTHROPIC_API_KEY"
     # Optional: paste a literal key here instead of using an env var. Takes
@@ -92,9 +92,9 @@ class ClaudeConfig(BaseModel):
 
 
 class SummarizerConfig(BaseModel):
-    provider: Literal["local", "claude"] = "local"
+    provider: Literal["local", "anthropic"] = "local"
     local: LocalLlmConfig = Field(default_factory=LocalLlmConfig)
-    claude: ClaudeConfig = Field(default_factory=ClaudeConfig)
+    anthropic: AnthropicConfig = Field(default_factory=AnthropicConfig)
 
 
 class ServerConfig(BaseModel):

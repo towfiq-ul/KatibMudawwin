@@ -9,10 +9,10 @@ def get_summarizer(config: SummarizerConfig) -> Summarizer:
         from katib_mudawwin.summarization.local_summarizer import LocalSummarizer
 
         return LocalSummarizer(config.local)
-    if config.provider == "claude":
-        from katib_mudawwin.summarization.claude_summarizer import ClaudeSummarizer
+    if config.provider == "anthropic":
+        from katib_mudawwin.summarization.llm_summarizer import LlmSummarizer
 
-        return ClaudeSummarizer(config.claude)
+        return LlmSummarizer(config.anthropic)
     raise ValueError(f"Unknown summarizer provider: {config.provider!r}")
 
 
