@@ -33,7 +33,7 @@ def test_transcribes_fixture_in_chunks():
         chunk = samples[start : start + chunk_size]
         if len(chunk) == 0:
             continue
-        texts.append(engine.transcribe_array(chunk))
+        texts.append(engine.transcribe_array(chunk).text)
 
     full_text = " ".join(texts).lower()
     assert "test" in full_text

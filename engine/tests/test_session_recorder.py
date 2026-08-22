@@ -9,6 +9,7 @@ from katib_mudawwin.detection.detector import MeetingDetector
 from katib_mudawwin.detection.fake_signal_source import ScriptedAudioSignalSource
 from katib_mudawwin.session.recorder import SessionRecorder
 from katib_mudawwin.storage import db
+from katib_mudawwin.transcription.whisper_engine import TranscriptionResult
 
 SAMPLE_RATE = 16000
 ACTIVE = AudioActivitySnapshot(True, True, False)
@@ -23,9 +24,9 @@ class FakeWhisperEngine:
     def __init__(self):
         self.calls = 0
 
-    def transcribe_array(self, audio) -> str:
+    def transcribe_array(self, audio) -> TranscriptionResult:
         self.calls += 1
-        return f"utterance {self.calls}"
+        return TranscriptionResult(f"utterance {self.calls}", "en")
 
 
 def _write_wav(path, seconds=0.5, sample_rate=SAMPLE_RATE):

@@ -47,10 +47,12 @@ class _StreamPipeline:
     def _handle_utterance(self, utterance) -> None:
         if utterance is None or len(utterance) == 0:
             return
-        text = self.whisper.transcribe_array(utterance)
-        if not text:
+        result = self.whisper.transcribe_array(utterance)
+        if not result.text:
             return
-        self.writer.write_entry(TranscriptEntry(datetime.now(), self.label, text))
+        self.writer.write_entry(
+            TranscriptEntry(datetime.now(), self.label, result.text, result.language)
+        )
 
     def step(self) -> None:
         """Drains every complete frame currently buffered on the source, so

@@ -64,11 +64,11 @@ def main() -> None:
                 continue
             utterance = segmenter.push_frame(frame)
             if utterance is not None and len(utterance) > 0:
-                write_line(whisper.transcribe_array(utterance))
+                write_line(whisper.transcribe_array(utterance).text)
     finally:
         utterance = segmenter.flush_remaining()
         if utterance is not None and len(utterance) > 0:
-            write_line(whisper.transcribe_array(utterance))
+            write_line(whisper.transcribe_array(utterance).text)
         zoom.stop()
         print("Stopped, PipeWire modules unloaded.")
 
