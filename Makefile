@@ -26,6 +26,7 @@ help:
 	@echo "  make start            engine-start + dashboard-start"
 	@echo "  make stop             engine-stop + dashboard-stop"
 	@echo "  make summary [DATE]   Summarize a day's notes (yyyymmdd, default: today in CST)"
+	@echo "  make retention-sweep  Delete raw audio past the age/size retention caps"
 	@echo "  make status           Check which project services are running (engine, dashboard)"
 	@echo "  make clean            Remove venv, node_modules, and caches"
 
@@ -121,6 +122,10 @@ stop: engine-stop dashboard-stop
 .PHONY: summary
 summary:
 	@$(PYTHON) -m katib_mudawwin.summarize_notes $(filter-out summary,$(MAKECMDGOALS))
+
+.PHONY: retention-sweep
+retention-sweep:
+	$(PYTHON) -m katib_mudawwin.retention_sweep
 
 # Swallows the optional trailing date arg in `make summary 20260821` as a
 # harmless no-op target, instead of Make trying (and failing) to build a

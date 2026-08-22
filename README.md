@@ -48,6 +48,16 @@ Summarization is not automatic -- run `make summary` (or `make summary
 per meeting that day; re-running it regenerates the file rather than
 duplicating entries.
 
+Each meeting's raw mic + Zoom audio is also persisted (never held entirely
+in RAM) to `audio/<meeting-id>/mic.wav` and `audio/<meeting-id>/zoom.wav`,
+with metadata (paths, timestamps, size) recorded in `db.sqlite` at the
+root of `storage_dir`. Both are local-only and gitignored -- raw audio and
+the database are never committed. Raw audio is not deleted automatically;
+run `make retention-sweep` to delete it once a meeting is older than
+`retention.max_age_days` (default 30) or once total raw-audio storage
+exceeds `retention.max_total_audio_bytes` (default 10 GB), oldest first.
+Transcripts and summaries are never touched by the sweep.
+
 `-run` starts each service in the foreground, blocking the terminal
 with its live log output -- use it while developing. To run them as
 background processes instead:
@@ -64,6 +74,10 @@ make dashboard-stop
 PIDs are tracked in `.run/*.pid`; `engine-stop` first calls the status
 API's `/stop` so any in-progress recording is finalized (transcript +
 summary written) before the process is killed, rather than cut off mid-session.
+
+```bash
+make retention-sweep    # delete raw audio past the age/size retention caps
+```
 
 To autostart it on login, see `scripts/katib-mudawwin.service`.
 
@@ -105,6 +119,8 @@ pipeline.
 
 ## Note on consent
 
-This tool records audio from meetings you're in, including other participants.
+This tool records audio from meetings you're in, including other
+participants, and -- unlike earlier versions -- now persists that raw
+audio to disk (see above) rather than discarding it after transcription.
 Make sure you comply with your jurisdiction's meeting-recording consent
 requirements before using it.

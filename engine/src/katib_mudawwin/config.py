@@ -97,6 +97,16 @@ class SummarizerConfig(BaseModel):
     anthropic: AnthropicConfig = Field(default_factory=AnthropicConfig)
 
 
+class RetentionConfig(BaseModel):
+    # Governs `make retention-sweep` (retention_sweep.py) only -- raw audio
+    # persisted under storage_dir/audio/<meeting-id>/ is deleted once a
+    # meeting is older than max_age_days, or (oldest meetings first) once
+    # total raw-audio storage exceeds max_total_audio_bytes. Never run
+    # automatically, and never touches transcripts/summaries.
+    max_age_days: int = 30
+    max_total_audio_bytes: int = 10 * 1024**3  # 10 GB
+
+
 class ServerConfig(BaseModel):
     status_api_host: str = "127.0.0.1"
     status_api_port: int = 8765
@@ -113,6 +123,7 @@ class AppConfig(BaseModel):
     vad: VadConfig = Field(default_factory=VadConfig)
     whisper: WhisperConfig = Field(default_factory=WhisperConfig)
     summarizer: SummarizerConfig = Field(default_factory=SummarizerConfig)
+    retention: RetentionConfig = Field(default_factory=RetentionConfig)
     server: ServerConfig = Field(default_factory=ServerConfig)
     dashboard: DashboardConfig = Field(default_factory=DashboardConfig)
 

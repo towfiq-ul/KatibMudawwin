@@ -8,6 +8,7 @@ from katib_mudawwin.detection.base import AudioActivitySnapshot
 from katib_mudawwin.detection.detector import MeetingDetector
 from katib_mudawwin.detection.fake_signal_source import ScriptedAudioSignalSource
 from katib_mudawwin.session.recorder import SessionRecorder
+from katib_mudawwin.storage import db
 
 SAMPLE_RATE = 16000
 ACTIVE = AudioActivitySnapshot(True, True, False)
@@ -93,3 +94,21 @@ def test_full_offline_pipeline_finalizes_transcript(tmp_path, monkeypatch):
     # triggered automatically when a meeting ends.
     assert len(summary_files) == 0
     assert not (storage_dir / "note.txt").exists()  # working file was moved, not left behind
+
+    # Raw mic/Zoom audio is persisted per meeting, and its metadata recorded
+    # in SQLite -- both new as of the raw-audio-persistence feature.
+    mic_wavs = list(storage_dir.glob("audio/*/mic.wav"))
+    zoom_wavs = list(storage_dir.glob("audio/*/zoom.wav"))
+    assert len(mic_wavs) == 1
+    assert len(zoom_wavs) == 1
+    assert mic_wavs[0].stat().st_size > 0
+    assert zoom_wavs[0].stat().st_size > 0
+
+    conn = db.connect(db.default_db_path(storage_dir))
+    rows = conn.execute("SELECT * FROM meetings").fetchall()
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["transcript_path"] == str(transcript_files[0])
+    assert row["mic_audio_path"] == str(mic_wavs[0])
+    assert row["zoom_audio_path"] == str(zoom_wavs[0])
+    assert row["audio_bytes"] == mic_wavs[0].stat().st_size + zoom_wavs[0].stat().st_size

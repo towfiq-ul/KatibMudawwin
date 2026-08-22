@@ -18,9 +18,13 @@ npm-debug.log*
 ZoomNotes/
 *.wav
 *.raw
+*.sqlite
+*.sqlite3
 test_notes.txt
 /note.txt
 /notes/
+/audio/
+/db.sqlite
 
 # OS
 .DS_Store
