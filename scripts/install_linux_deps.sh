@@ -41,6 +41,11 @@ if command -v pkg-config >/dev/null 2>&1; then
 fi
 [ -f /usr/include/xdo.h ] || missing+=("libxdo-dev")
 
+# `make bundle` (npm run tauri build) needs these to actually produce
+# .rpm/.deb/AppImage output, not just to compile the binary.
+command -v rpmbuild >/dev/null 2>&1 || missing+=("rpm")
+command -v patchelf >/dev/null 2>&1 || missing+=("patchelf")
+
 if [ ${#missing[@]} -eq 0 ]; then
   echo ""
   echo "All system dependencies OK."

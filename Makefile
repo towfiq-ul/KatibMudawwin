@@ -43,6 +43,10 @@ desktop-setup: ## npm install for the Tauri desktop app
 desktop-run: ## Start the desktop app in dev mode (window + tray icon)
 	cd desktop && npm run tauri dev
 
+.PHONY: bundle
+bundle: ## Build installable .deb/.rpm/AppImage packages (desktop/src-tauri/target/release/bundle/)
+	cd desktop && npm run tauri build
+
 .PHONY: engine-start
 engine-start: ## Start the engine in the background (logs: .run/engine.log)
 	@mkdir -p $(RUN_DIR)

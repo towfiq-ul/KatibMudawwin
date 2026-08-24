@@ -1,4 +1,4 @@
-# KātibMudawwin
+![KātibMudawwin](assets/banner.png)
 
 A local, personal meeting note-taker that runs alongside the Zoom desktop client.
 It detects when you're in a Zoom meeting, transcribes your mic and the meeting
@@ -48,6 +48,7 @@ make build              # engine-setup + desktop-setup: install all deps
 make engine-test        # run the offline test suite
 make engine-run          # start the engine in the foreground (status API, detection loop)
 make desktop-run          # start the desktop app in dev mode (window + tray icon)
+make bundle              # build installable .deb/.rpm/AppImage packages
 ```
 
 The engine polls for an active Zoom audio signal via `pactl`, and once a
@@ -96,8 +97,10 @@ summary written) before the process is killed, rather than cut off mid-session.
 The desktop app isn't backgrounded the same way -- it's a GUI app with its
 own tray-resident lifecycle (closing its window hides it to tray; the tray's
 Quit item is the real exit), so `make desktop-run` is a dev-mode launch, and
-production use is the built `.deb`/AppImage (`cd desktop && npm run tauri
-build`) launched like any other installed app.
+production use is the built `.deb`/`.rpm`/AppImage. Run `make bundle` to
+build all three (output in
+`desktop/src-tauri/target/release/bundle/{deb,rpm,appimage}/`), then
+install/launch the resulting package like any other app.
 
 ```bash
 make retention-sweep    # delete raw audio past the age/size retention caps
