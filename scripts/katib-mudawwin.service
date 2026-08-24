@@ -15,8 +15,9 @@ After=graphical-session.target
 
 [Service]
 Type=simple
-# Adjust this path if the repo isn't checked out at ~/workspace/zoom-app-screen-note-taker
-ExecStart=%h/workspace/zoom-app-screen-note-taker/engine/.venv/bin/katib-mudawwin
+# Adjust this path if the repo isn't checked out at ~/KatibMudawwin
+# (the default clone location used by install.sh)
+ExecStart=%h/KatibMudawwin/engine/.venv/bin/katib-mudawwin
 Restart=on-failure
 RestartSec=5
 

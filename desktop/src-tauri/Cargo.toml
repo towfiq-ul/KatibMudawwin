@@ -1,0 +1,23 @@
+[package]
+name = "katib-mudawwin-desktop"
+version = "0.1.0"
+description = "KatibMudawwin desktop app -- native tray + window replacing the pystray tray icon and the Node/Express dashboard"
+edition = "2021"
+
+[lib]
+name = "katib_mudawwin_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-single-instance = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# serde_yaml is archived/unmaintained (as of 2024); this is a maintained
+# drop-in continuation with the same API.
+serde_yaml_ng = "0.10"
+reqwest = { version = "0.12", features = ["json"] }
+dirs = "5"
