@@ -1,0 +1,52 @@
+name: Release
+
+# The `release` branch only ever moves forward via master -> release
+# merges (see CONTRIBUTING.md's branch model); every push here is a real
+# release. scripts/ci/compute_release.py works out the version bump from
+# Conventional Commits since the last vX.Y.Z tag, then this builds and
+# publishes the installable packages for it.
+on:
+  push:
+    branches: [release]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history + tags, needed to find the last release
+
+      - name: Compute next version and release notes
+        id: version
+        run: python3 scripts/ci/compute_release.py
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up Rust
+        run: rustup default stable
+
+      - name: Install system + Tauri build dependencies
+        run: bash scripts/install_linux_deps.sh
+
+      - name: Build .deb/.rpm/AppImage
+        run: make bundle
+
+      - name: Create GitHub Release ${{ steps.version.outputs.tag }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --target "$GITHUB_SHA" \
+            --title "${{ steps.version.outputs.tag }}" \
+            --notes-file "${{ steps.version.outputs.notes_file }}" \
+            "desktop/src-tauri/target/release/bundle/deb/"*.deb \
+            "desktop/src-tauri/target/release/bundle/rpm/"*.rpm \
+            "desktop/src-tauri/target/release/bundle/appimage/"*.AppImage

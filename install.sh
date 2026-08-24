@@ -1,19 +1,26 @@
 #!/usr/bin/env bash
-# Quick installer for KātibMudawwin.
+# Quick source installer for KātibMudawwin -- for development, or to run
+# the latest in-progress code. Most users should instead grab a prebuilt
+# .deb/.rpm/AppImage from the latest GitHub Release (built automatically by
+# .github/workflows/release.yml -- see CONTRIBUTING.md for the release
+# process); this script builds from source instead.
 #
-#   curl -fsSL https://raw.githubusercontent.com/towfiq-ul/KatibMudawwin/master/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/towfiq-ul/KatibMudawwin/develop/install.sh | bash
 #
 # Clones the repo and runs `make build` (engine venv + desktop npm install).
 # Runs under bash regardless of your login shell, since it's piped straight
 # into `bash`. Linux only for now -- see README's macOS/Windows notes.
 #
-# Override defaults with env vars, e.g.:
-#   KM_INSTALL_DIR=~/dev/katib-mudawwin KM_BRANCH=tauri-desktop-app \
+# Defaults to `develop` (CONTRIBUTING.md's branch model: develop -> master
+# -> release -> tag) since that's the actual purpose of building from
+# source rather than installing a release package -- override with
+# KM_BRANCH for anything else, e.g.:
+#   KM_INSTALL_DIR=~/dev/katib-mudawwin KM_BRANCH=master \
 #     curl -fsSL .../install.sh | bash
 set -euo pipefail
 
 REPO_URL="${KM_REPO_URL:-https://github.com/towfiq-ul/KatibMudawwin.git}"
-BRANCH="${KM_BRANCH:-master}"
+BRANCH="${KM_BRANCH:-develop}"
 INSTALL_DIR="${KM_INSTALL_DIR:-$HOME/KatibMudawwin}"
 
 if [ "$(uname -s)" != "Linux" ]; then

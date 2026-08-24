@@ -1,0 +1,26 @@
+name: Commit message lint
+
+# Blocks a PR into develop/master/release if any of its commits don't
+# follow Conventional Commits -- release.yml's version-bump computation
+# depends on that convention, so an unparseable commit needs to be caught
+# here, not silently ignored at release time.
+on:
+  pull_request:
+    branches: [develop, master, release]
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        run: git fetch origin "${{ github.event.pull_request.base.ref }}"
+
+      - name: Check commit messages follow Conventional Commits
+        run: |
+          bash scripts/ci/check_commit_messages.sh \
+            "origin/${{ github.event.pull_request.base.ref }}" HEAD
