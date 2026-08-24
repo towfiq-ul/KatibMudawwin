@@ -8,7 +8,10 @@ use serde::Serialize;
 use serde_json::Value;
 use tauri::command;
 
-use crate::{branding, config, engine_client::EngineClient, engine_client::EngineStatus, notes};
+use crate::{
+    branding, config, engine_client::EngineClient, engine_client::EngineStatus,
+    engine_client::SummarizeResult, notes,
+};
 
 #[command]
 pub fn get_notes_dates() -> Vec<String> {
@@ -115,6 +118,16 @@ pub async fn engine_stop() -> Result<EngineStatus, String> {
     let (host, port) = config::get_server_host_port(&loaded.raw);
     EngineClient::new(&host, port)
         .stop()
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[command]
+pub async fn summarize_notes(date: String) -> Result<SummarizeResult, String> {
+    let loaded = config::load_config();
+    let (host, port) = config::get_server_host_port(&loaded.raw);
+    EngineClient::new(&host, port)
+        .summarize(&date)
         .await
         .map_err(|e| e.to_string())
 }

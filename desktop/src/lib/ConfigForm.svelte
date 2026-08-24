@@ -95,10 +95,16 @@
             <option value={opt.value}>{opt.label}</option>
           {/each}
         </select>
+      {:else if field.type === 'password'}
+        <input
+          type="password"
+          autocomplete="off"
+          placeholder={field.placeholder || ''}
+          bind:value={values[field.name]}
+        />
       {:else}
         <input
-          type={field.type}
-          autocomplete={field.type === 'password' ? 'off' : undefined}
+          type="text"
           placeholder={field.placeholder || ''}
           bind:value={values[field.name]}
         />

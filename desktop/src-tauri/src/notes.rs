@@ -28,6 +28,19 @@ pub fn is_valid_note_file(file: &str) -> bool {
         && time_part.bytes().all(|b| b.is_ascii_digit())
 }
 
+// file: summary_note_YYYYMMDD.txt (written by /summarize, see
+// summarize_notes.py's summarize_date()).
+pub fn is_valid_summary_file(file: &str) -> bool {
+    let Some(date_part) = file.strip_prefix("summary_note_").and_then(|s| s.strip_suffix(".txt")) else {
+        return false;
+    };
+    date_part.len() == 8 && date_part.bytes().all(|b| b.is_ascii_digit())
+}
+
+fn is_readable_note_file(file: &str) -> bool {
+    is_valid_note_file(file) || is_valid_summary_file(file)
+}
+
 pub fn list_date_dirs(storage_dir: &Path) -> Vec<String> {
     let notes_root = storage_dir.join("notes");
     let mut dates: Vec<String> = match fs::read_dir(&notes_root) {
@@ -55,14 +68,14 @@ pub fn list_note_files(storage_dir: &Path, date: &str) -> Option<Vec<String>> {
         .ok()?
         .filter_map(|e| e.ok())
         .filter_map(|e| e.file_name().into_string().ok())
-        .filter(|name| is_valid_note_file(name))
+        .filter(|name| is_readable_note_file(name))
         .collect();
     files.sort_by(|a, b| b.cmp(a));
     Some(files)
 }
 
 pub fn read_note(storage_dir: &Path, date: &str, file: &str) -> Option<String> {
-    if !is_valid_date(date) || !is_valid_note_file(file) {
+    if !is_valid_date(date) || !is_readable_note_file(file) {
         return None;
     }
     let path = storage_dir.join("notes").join(date).join(file);

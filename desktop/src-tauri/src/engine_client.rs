@@ -15,10 +15,19 @@ pub struct EngineStatus {
     pub summary_path: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SummarizeResult {
+    pub date: String,
+    pub summary_path: String,
+}
+
 #[derive(Debug)]
 pub enum EngineError {
     Unreachable(String),
     BadStatus(u16),
+    // (status code, message) -- carries the engine's {"error": "..."} body
+    // (e.g. "no notes found for 20260825") instead of just a status code.
+    Failed(u16, String),
 }
 
 impl std::fmt::Display for EngineError {
@@ -28,12 +37,17 @@ impl std::fmt::Display for EngineError {
                 write!(f, "engine unreachable: {msg}")
             }
             EngineError::BadStatus(code) => write!(f, "engine returned status {code}"),
+            EngineError::Failed(_, msg) => write!(f, "{msg}"),
         }
     }
 }
 
 pub struct EngineClient {
     client: reqwest::Client,
+    // Summarization can run a local LLM inference (or, on first use,
+    // download a ~2.3GB model) -- give it much more room than the quick
+    // status/start/stop calls below.
+    long_client: reqwest::Client,
     base_url: String,
 }
 
@@ -42,6 +56,10 @@ impl EngineClient {
         Self {
             client: reqwest::Client::builder()
                 .timeout(Duration::from_secs(5))
+                .build()
+                .expect("failed to build http client"),
+            long_client: reqwest::Client::builder()
+                .timeout(Duration::from_secs(300))
                 .build()
                 .expect("failed to build http client"),
             base_url: format!("http://{host}:{port}"),
@@ -73,5 +91,30 @@ impl EngineClient {
 
     pub async fn stop(&self) -> Result<EngineStatus, EngineError> {
         self.request(reqwest::Method::POST, "/stop").await
+    }
+
+    pub async fn summarize(&self, date: &str) -> Result<SummarizeResult, EngineError> {
+        let res = self
+            .long_client
+            .post(format!("{}/summarize", self.base_url))
+            .json(&serde_json::json!({ "date": date }))
+            .send()
+            .await
+            .map_err(|e| EngineError::Unreachable(e.to_string()))?;
+
+        let status = res.status();
+        if !status.is_success() {
+            let body: serde_json::Value = res.json().await.unwrap_or_default();
+            let msg = body
+                .get("error")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| format!("engine returned status {}", status.as_u16()));
+            return Err(EngineError::Failed(status.as_u16(), msg));
+        }
+
+        res.json::<SummarizeResult>()
+            .await
+            .map_err(|e| EngineError::Unreachable(e.to_string()))
     }
 }

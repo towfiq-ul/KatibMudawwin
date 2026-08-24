@@ -60,9 +60,12 @@ always CST/CDT regardless of the system's local timezone. The desktop
 app's tray icon and window both offer a manual Start/Stop override.
 
 Summarization is not automatic -- run `make summary` (or `make summary
-<yyyymmdd>` for a specific day) to summarize a day's notes on demand. This
-(re)writes `notes/<yyyymmdd>/summary_note_<yyyymmdd>.txt` with one block
-per meeting that day; re-running it regenerates the file rather than
+<yyyymmdd>` for a specific day) to summarize a day's notes on demand, or
+click **Summarize** in the desktop app's notes browser after opening a
+date's folder (this calls the engine status API's `POST /summarize`, which
+does the same thing). This (re)writes
+`notes/<yyyymmdd>/summary_note_<yyyymmdd>.txt` with one block per meeting
+that day; re-running it (either way) regenerates the file rather than
 duplicating entries.
 
 Each meeting's raw mic + Zoom audio is also persisted (never held entirely

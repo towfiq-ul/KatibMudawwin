@@ -3,11 +3,13 @@
 // engine's HTTP status API instead of in-process SessionRecorder calls,
 // since the engine is now a separate process.
 //
-// tray.py polled recorder.state every 2s and called icon.update_menu() on
-// change, because most pystray backends don't re-evaluate visible=
-// predicates live (see that file's comment). Tauri v2's MenuItem supports
-// live in-place set_enabled()/set_text() with no rebuild needed, so the
-// same polling loop here is simpler: just toggle enabled state directly.
+// Start/Stop recording is a single toggling menu item, not two separate
+// items with one disabled -- only one action is ever valid at a time, so
+// only one should ever be shown. tray.py polled recorder.state every 2s and
+// called icon.update_menu() on change, because most pystray backends don't
+// re-evaluate visible=/text predicates live (see that file's comment).
+// Tauri v2's MenuItem supports live in-place set_text() with no rebuild
+// needed, so the same polling loop here just relabels the one item.
 
 use std::thread;
 use std::time::Duration;
@@ -23,8 +25,7 @@ use crate::{config, engine_client::EngineClient};
 const POLL_INTERVAL: Duration = Duration::from_secs(2);
 
 struct TrayMenuItems {
-    start: MenuItem<Wry>,
-    stop: MenuItem<Wry>,
+    toggle_recording: MenuItem<Wry>,
 }
 
 fn engine_client_from_config() -> EngineClient {
@@ -33,27 +34,32 @@ fn engine_client_from_config() -> EngineClient {
     EngineClient::new(&host, port)
 }
 
-fn is_recording() -> bool {
-    tauri::async_runtime::block_on(engine_client_from_config().get_status())
+fn is_recording(client: &EngineClient) -> bool {
+    tauri::async_runtime::block_on(client.get_status())
         .map(|s| s.status == "recording")
         .unwrap_or(false)
 }
 
+fn label_for(recording: bool) -> &'static str {
+    if recording {
+        "Stop recording"
+    } else {
+        "Start recording"
+    }
+}
+
 fn set_recording_state(items: &TrayMenuItems, recording: bool) {
-    let _ = items.start.set_enabled(!recording);
-    let _ = items.stop.set_enabled(recording);
+    let _ = items.toggle_recording.set_text(label_for(recording));
 }
 
 pub fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
-    let start_i = MenuItem::with_id(app, "start", "Start recording", true, None::<&str>)?;
-    let stop_i = MenuItem::with_id(app, "stop", "Stop recording", false, None::<&str>)?;
+    let toggle_i = MenuItem::with_id(app, "toggle_recording", label_for(false), true, None::<&str>)?;
     let open_i = MenuItem::with_id(app, "open", "Show KatibMudawwin", true, None::<&str>)?;
     let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&start_i, &stop_i, &open_i, &quit_i])?;
+    let menu = Menu::with_items(app, &[&toggle_i, &open_i, &quit_i])?;
 
     app.manage(TrayMenuItems {
-        start: start_i.clone(),
-        stop: stop_i.clone(),
+        toggle_recording: toggle_i.clone(),
     });
 
     TrayIconBuilder::new()
@@ -75,17 +81,20 @@ pub fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
 
 fn handle_menu_event(app: &AppHandle, id: &str) {
     match id {
-        "start" => {
+        "toggle_recording" => {
             let app = app.clone();
             thread::spawn(move || {
-                let _ = tauri::async_runtime::block_on(engine_client_from_config().start());
-                refresh_menu(&app);
-            });
-        }
-        "stop" => {
-            let app = app.clone();
-            thread::spawn(move || {
-                let _ = tauri::async_runtime::block_on(engine_client_from_config().stop());
+                let client = engine_client_from_config();
+                // Re-check current state right before acting, rather than
+                // trusting the last poll (up to 2s stale), so a fast
+                // double-click or a state change from elsewhere (the
+                // desktop window, another client) can't fire the wrong
+                // action.
+                let _ = if is_recording(&client) {
+                    tauri::async_runtime::block_on(client.stop())
+                } else {
+                    tauri::async_runtime::block_on(client.start())
+                };
                 refresh_menu(&app);
             });
         }
@@ -110,7 +119,7 @@ fn handle_menu_event(app: &AppHandle, id: &str) {
 
 fn refresh_menu(app: &AppHandle) {
     if let Some(items) = app.try_state::<TrayMenuItems>() {
-        set_recording_state(&items, is_recording());
+        set_recording_state(&items, is_recording(&engine_client_from_config()));
     }
 }
 
@@ -118,7 +127,7 @@ fn poll_status_loop(app: AppHandle) {
     let mut last_recording: Option<bool> = None;
     loop {
         thread::sleep(POLL_INTERVAL);
-        let recording = is_recording();
+        let recording = is_recording(&engine_client_from_config());
         if last_recording != Some(recording) {
             last_recording = Some(recording);
             if let Some(items) = app.try_state::<TrayMenuItems>() {

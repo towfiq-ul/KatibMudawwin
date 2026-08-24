@@ -46,7 +46,7 @@ def main() -> None:
 
     threading.Thread(
         target=run_status_api,
-        args=(recorder, config.server.status_api_host, config.server.status_api_port),
+        args=(recorder, config, config.server.status_api_host, config.server.status_api_port),
         daemon=True,
     ).start()
 

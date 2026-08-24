@@ -7,6 +7,12 @@
   let errorText = '';
   let timer;
 
+  // Only one of Start/Stop is ever a valid action -- show just that one,
+  // same as the tray icon's single toggling menu item (tray.rs). Anything
+  // other than a confirmed "recording" status (idle, unreachable, loading)
+  // defaults to showing Start.
+  $: recording = status === 'recording';
+
   async function refresh() {
     try {
       const data = await getEngineStatus();
@@ -21,13 +27,21 @@
   }
 
   async function handleStart() {
-    await startEngine();
-    refresh();
+    try {
+      await startEngine();
+      await refresh(); // only refresh (and let it own errorText) on success
+    } catch (err) {
+      errorText = 'Failed to start recording -- is the engine running?';
+    }
   }
 
   async function handleStop() {
-    await stopEngine();
-    refresh();
+    try {
+      await stopEngine();
+      await refresh();
+    } catch (err) {
+      errorText = 'Failed to stop recording -- is the engine running?';
+    }
   }
 
   onMount(() => {
@@ -39,8 +53,11 @@
 </script>
 
 <p>Status: <span class={statusClass}>{status}</span></p>
-<button on:click={handleStart}>Start recording</button>
-<button on:click={handleStop}>Stop recording</button>
+{#if recording}
+  <button on:click={handleStop}>Stop recording</button>
+{:else}
+  <button on:click={handleStart}>Start recording</button>
+{/if}
 <p class="muted">{errorText}</p>
 
 <style>

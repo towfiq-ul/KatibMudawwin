@@ -48,7 +48,7 @@ cd "$INSTALL_DIR"
 echo ""
 bash scripts/install_linux_deps.sh || {
   echo ""
-  echo "Some system dependencies are missing (see above)." >&2
+  echo "Some system dependencies couldn't be installed automatically (see above)." >&2
   echo "Install them, then re-run 'make build' in $INSTALL_DIR." >&2
 }
 

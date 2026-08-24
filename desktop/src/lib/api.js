@@ -28,6 +28,10 @@ export function getNoteContent(date, file) {
   return invoke('get_note_content', { date, file });
 }
 
+export function summarizeNotes(date) {
+  return invoke('summarize_notes', { date });
+}
+
 export function getConfig() {
   return invoke('get_config');
 }

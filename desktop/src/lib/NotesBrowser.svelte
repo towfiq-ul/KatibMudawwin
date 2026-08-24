@@ -1,5 +1,5 @@
 <script>
-  import { getNoteDates, getNoteFiles, getNoteContent } from './api.js';
+  import { getNoteDates, getNoteFiles, getNoteContent, summarizeNotes } from './api.js';
 
   let open = false;
   let view = 'dates'; // 'dates' | 'files' | 'content'
@@ -9,12 +9,15 @@
   let currentFile = '';
   let content = '';
   let loading = false;
+  let summarizing = false;
+  let summarizeStatus = '';
 
   function formatDate(yyyymmdd) {
     return `${yyyymmdd.slice(0, 4)}-${yyyymmdd.slice(4, 6)}-${yyyymmdd.slice(6, 8)}`;
   }
 
   function formatNoteLabel(filename) {
+    if (filename.startsWith('summary_note_')) return 'Summary';
     const m = filename.match(/^note_\d{8}_(\d{2})(\d{2})(\d{2})\.txt$/);
     return m ? `${m[1]}:${m[2]}:${m[3]}` : filename;
   }
@@ -47,6 +50,23 @@
     loading = false;
   }
 
+  async function handleSummarize() {
+    summarizing = true;
+    summarizeStatus = '';
+    try {
+      await summarizeNotes(currentDate);
+      summarizeStatus = 'Summary saved.';
+      await showFiles(currentDate); // refresh so the new summary_note_*.txt shows up
+    } catch (err) {
+      summarizeStatus = String(err);
+    } finally {
+      summarizing = false;
+      setTimeout(() => {
+        summarizeStatus = '';
+      }, 5000);
+    }
+  }
+
   function close() {
     open = false;
   }
@@ -72,8 +92,17 @@
             {formatDate(currentDate)} {formatNoteLabel(currentFile)}
           {/if}
         </h3>
+        {#if view === 'files'}
+          <button on:click={handleSummarize} disabled={summarizing}>
+            {summarizing ? 'Summarizing…' : 'Summarize'}
+          </button>
+        {/if}
         <button class="close-btn" aria-label="Close" on:click={close}>&times;</button>
       </div>
+
+      {#if summarizeStatus}
+        <p class="summarize-status">{summarizeStatus}</p>
+      {/if}
 
       {#if view === 'content'}
         <pre>{content}</pre>
@@ -87,11 +116,11 @@
             <li class="muted">No notes for this day.</li>
           {:else if view === 'dates'}
             {#each dates as date}
-              <li on:click={() => showFiles(date)}>{formatDate(date)}</li>
+              <li><button class="list-item-btn" on:click={() => showFiles(date)}>{formatDate(date)}</button></li>
             {/each}
           {:else}
             {#each files as file}
-              <li on:click={() => showContent(file)}>{formatNoteLabel(file)}</li>
+              <li><button class="list-item-btn" on:click={() => showContent(file)}>{formatNoteLabel(file)}</button></li>
             {/each}
           {/if}
         </ul>
@@ -166,6 +195,14 @@
     padding: 0 0.25rem;
   }
 
+  .summarize-status {
+    margin: 0;
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    color: #555;
+    border-bottom: 1px solid #eee;
+  }
+
   .modal-list {
     list-style: none;
     margin: 0;
@@ -173,12 +210,19 @@
     overflow-y: auto;
   }
 
-  .modal-list li {
+  .list-item-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
     padding: 0.6rem 1rem;
+    border: none;
+    border-radius: 0;
+    background: none;
+    font: inherit;
     cursor: pointer;
   }
 
-  .modal-list li:hover {
+  .list-item-btn:hover {
     background: #fafafa;
   }
 

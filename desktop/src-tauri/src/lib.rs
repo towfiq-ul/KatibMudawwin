@@ -28,6 +28,7 @@ pub fn run() {
             commands::engine_status,
             commands::engine_start,
             commands::engine_stop,
+            commands::summarize_notes,
             commands::get_branding,
         ])
         .setup(|app| {
