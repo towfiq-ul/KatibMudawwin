@@ -18,11 +18,23 @@ ENGINE_LOG := $(RUN_DIR)/engine.log
 
 .DEFAULT_GOAL := help
 
+# --- General -------------------------------------------------------------
+
 .PHONY: help
-help: ## Show this help
-	@echo "KatibMudawwin -- useful commands"
-	@echo ""
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "  make %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+help: ## Show this help, grouped by section
+	@if [ -t 1 ]; then bold=$$'\033[1m'; cyan=$$'\033[36m'; reset=$$'\033[0m'; \
+	else bold=''; cyan=''; reset=''; fi; \
+	printf "%sKatibMudawwin%s -- useful commands\n" "$$bold" "$$reset"; \
+	awk -v bold="$$bold" -v cyan="$$cyan" -v reset="$$reset" '\
+		/^# --- / { \
+			line = $$0; sub(/^# --- /, "", line); sub(/[ -]*$$/, "", line); \
+			printf "\n%s%s%s\n", bold, line, reset; next; \
+		} \
+		/^[a-zA-Z0-9_-]+:.*## / { \
+			split($$0, parts, /:.*## /); \
+			printf "  %smake %-16s%s %s\n", cyan, parts[1], reset, parts[2]; \
+		} \
+	' $(MAKEFILE_LIST)
 
 # --- Setup ------------------------------------------------------------
 
