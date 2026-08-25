@@ -25,6 +25,9 @@ jobs:
         id: version
         run: python3 scripts/ci/compute_release.py
 
+      - name: Sync package version to ${{ steps.version.outputs.tag }}
+        run: python3 scripts/ci/set_version.py "${{ steps.version.outputs.tag }}"
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:

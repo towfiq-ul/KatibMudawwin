@@ -1,6 +1,6 @@
 {
   "name": "katib-mudawwin-desktop",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "KatibMudawwin -- native desktop app (Tauri + Svelte) for engine status/start/stop, browsing notes, and editing config.yaml. Replaces the Node/Express dashboard and the pystray tray icon.",
   "private": true,
   "type": "module",

@@ -26,6 +26,7 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`
 
 This isn't just style -- `.github/workflows/release.yml` parses these prefixes to decide the next version's major/minor/patch bump (`scripts/ci/compute_release.py`), and `.github/workflows/commitlint.yml` blocks any PR containing a commit that doesn't parse.
 
+- The very first release is always **`v0.0.0`**, regardless of commit content. Normal semver bumping starts from the second release onward.
 - A `fix:` commit bumps the **patch** version.
 - A `feat:` commit bumps the **minor** version.
 - A breaking change bumps the **major** version -- mark it either with `!` right after the type/scope (`feat!: drop config.yaml v1 support`) or a `BREAKING CHANGE:` footer in the commit body.
@@ -46,6 +47,7 @@ feat!: require config.yaml v2, drop v1 auto-migration
 2. Open a PR merging `master` into `release`. Merge it.
 3. That push triggers `.github/workflows/release.yml`, which:
    - Computes the next `vX.Y.Z` from commits since the last tag (see the bump rule above).
+   - Writes that version into `desktop/package.json`, `desktop/src-tauri/Cargo.toml`, `desktop/src-tauri/tauri.conf.json`, and `engine/pyproject.toml` (`scripts/ci/set_version.py`) so the built packages' own version metadata matches the tag -- these files are never hand-edited or committed back; CI patches them fresh on every release.
    - Runs `make bundle` to build the `.deb`/`.rpm`/AppImage.
    - Creates the git tag and a GitHub Release with generated release notes (grouped by commit type) and the three packages attached.
 

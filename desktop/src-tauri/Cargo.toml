@@ -1,6 +1,6 @@
 [package]
 name = "katib-mudawwin-desktop"
-version = "0.1.0"
+version = "0.0.0"
 description = "KatibMudawwin desktop app -- native tray + window replacing the pystray tray icon and the Node/Express dashboard"
 edition = "2021"
 

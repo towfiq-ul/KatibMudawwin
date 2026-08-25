@@ -3,11 +3,13 @@
 `release` branch (see .github/workflows/release.yml), from Conventional
 Commits since the last vX.Y.Z tag.
 
-No tag yet -> baseline is v0.0.0. Bump rule: any breaking change (a '!'
-after type/scope, or a 'BREAKING CHANGE:' footer) -> major; else any
-'feat:' -> minor; else any 'fix:' -> patch; else -> patch (every push to
-`release` is a release, so an all-chores/docs push still ships a patch
-bump rather than being silently skipped).
+No tag yet (the very first release) -> always v0.0.0, regardless of
+commit content. From the second release onward, bumps from the last tag:
+any breaking change (a '!' after type/scope, or a 'BREAKING CHANGE:'
+footer) -> major; else any 'feat:' -> minor; else any 'fix:' -> patch;
+else -> patch (every push to `release` is a release, so an
+all-chores/docs push still ships a patch bump rather than being silently
+skipped).
 
 Writes `tag` and `notes_file` to $GITHUB_OUTPUT (falls back to stdout when
 run outside CI) for the workflow's later steps to use.
@@ -100,11 +102,18 @@ def bump_version(base: tuple[int, int, int], kind: str) -> tuple[int, int, int]:
 
 def main() -> None:
     base_tag = last_tag()
-    base = base_tag or (0, 0, 0)
     commits = commits_since(base_tag)
     kind, grouped = classify(commits)
-    new = bump_version(base, kind)
-    tag = f"v{new[0]}.{new[1]}.{new[2]}"
+
+    if base_tag is None:
+        # First release ever: always v0.0.0, regardless of commit content.
+        # Normal semver bumping (see bump_version) only starts from the
+        # second release onward, once there's an actual prior tag to bump
+        # from.
+        tag = "v0.0.0"
+    else:
+        new = bump_version(base_tag, kind)
+        tag = f"v{new[0]}.{new[1]}.{new[2]}"
 
     notes_path = "RELEASE_NOTES.md"
     with open(notes_path, "w", encoding="utf-8") as f:
