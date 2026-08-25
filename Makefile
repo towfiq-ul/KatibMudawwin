@@ -1,8 +1,18 @@
-VENV := engine/.venv
-PYTHON := $(VENV)/bin/python
-PIP := $(VENV)/bin/pip
+# KātibMudawwin -- see docs/installation.md for the full command reference,
+# docs/usage.md for what each of these actually does day to day.
+#
+# Recipes run under bash with -eu -o pipefail: a failing command anywhere
+# in a multi-line recipe (engine-start/engine-stop) aborts the recipe
+# instead of silently continuing, same as the standalone scripts/*.sh.
+SHELL := /usr/bin/env bash
+.SHELLFLAGS := -euo pipefail -c
 
-RUN_DIR := .run
+# Override any of these on the command line, e.g. `make PYTHON=python3.11 engine-run`.
+VENV ?= engine/.venv
+PYTHON ?= $(VENV)/bin/python
+PIP ?= $(VENV)/bin/pip
+
+RUN_DIR ?= .run
 ENGINE_PIDFILE := $(RUN_DIR)/engine.pid
 ENGINE_LOG := $(RUN_DIR)/engine.log
 
@@ -14,8 +24,10 @@ help: ## Show this help
 	@echo ""
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "  make %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
+# --- Setup ------------------------------------------------------------
+
 .PHONY: deps-linux
-deps-linux: ## Check/report missing Linux system deps (pactl, ffmpeg, Tauri build deps)
+deps-linux: ## Check/install missing Linux system deps (pactl, ffmpeg, Tauri build deps)
 	bash scripts/install_linux_deps.sh
 
 .PHONY: build
@@ -27,6 +39,12 @@ engine-setup: ## Create engine/.venv and install the Python engine (with dev dep
 	$(PIP) install --upgrade pip
 	$(PIP) install -e "./engine[dev]"
 
+.PHONY: desktop-setup
+desktop-setup: ## npm install for the Tauri desktop app
+	cd desktop && npm install
+
+# --- Run (foreground) ---------------------------------------------------
+
 .PHONY: engine-test
 engine-test: ## Run the Python test suite (pytest)
 	$(PYTHON) -m pytest engine/tests -v
@@ -35,17 +53,11 @@ engine-test: ## Run the Python test suite (pytest)
 engine-run: ## Start the engine in the foreground (status API, detection)
 	$(PYTHON) -m katib_mudawwin.main
 
-.PHONY: desktop-setup
-desktop-setup: ## npm install for the Tauri desktop app
-	cd desktop && npm install
-
 .PHONY: desktop-run
 desktop-run: ## Start the desktop app in dev mode (window + tray icon)
 	cd desktop && npm run tauri dev
 
-.PHONY: bundle
-bundle: ## Build installable .deb/.rpm/AppImage packages (desktop/src-tauri/target/release/bundle/)
-	cd desktop && npm run tauri build
+# --- Run (background) ---------------------------------------------------
 
 .PHONY: engine-start
 engine-start: ## Start the engine in the background (logs: .run/engine.log)
@@ -80,6 +92,12 @@ start: engine-start ## Alias for engine-start
 .PHONY: stop
 stop: engine-stop ## Alias for engine-stop
 
+.PHONY: status
+status: ## Check whether the engine's status API is running
+	@bash scripts/status.sh
+
+# --- Notes & packaging ---------------------------------------------------
+
 .PHONY: summary
 summary: ## Summarize a day's notes (yyyymmdd, default: today in CST)
 	@$(PYTHON) -m katib_mudawwin.summarize_notes $(filter-out summary,$(MAKECMDGOALS))
@@ -88,15 +106,17 @@ summary: ## Summarize a day's notes (yyyymmdd, default: today in CST)
 retention-sweep: ## Delete raw audio past the age/size retention caps
 	$(PYTHON) -m katib_mudawwin.retention_sweep
 
+.PHONY: bundle
+bundle: ## Build installable .deb/.rpm/AppImage packages (desktop/src-tauri/target/release/bundle/)
+	cd desktop && npm run tauri build
+
 # Swallows the optional trailing date arg in `make summary 20260821` as a
 # harmless no-op target, instead of Make trying (and failing) to build a
 # real target named "20260821".
 %:
 	@:
 
-.PHONY: status
-status: ## Check whether the engine's status API is running
-	@bash scripts/status.sh
+# --- Cleanup ---------------------------------------------------------
 
 .PHONY: clean
 clean: ## Remove venv, node_modules, Rust build output, and caches
