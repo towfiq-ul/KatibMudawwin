@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "katib-mudawwin"
-version = "0.1.0"
+version = "0.0.0"
 description = "KātibMudawwin -- local background engine for automatic Zoom meeting note-taking"
 requires-python = ">=3.10"
 dependencies = [
@@ -22,8 +22,6 @@ dependencies = [
     # >=1 hung for minutes (instead of failing fast) summarizing against an
     # over-quota API key -- pin below it until that's understood.
     "anthropic>=0.40,<1",
-    "pystray>=0.19",
-    "Pillow>=10",
     # Runs the local (Phi-3) summarizer in-process -- no separate `ollama
     # serve` needed. Prebuilt wheels cover common Linux/macOS/Windows +
     # Python combos; falls back to a from-source build (needs a C/C++

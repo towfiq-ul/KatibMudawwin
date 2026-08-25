@@ -9,6 +9,11 @@ __pycache__/
 node_modules/
 npm-debug.log*
 
+# Rust / Tauri (desktop/)
+/desktop/dist/
+/desktop/src-tauri/target/
+/desktop/src-tauri/gen/
+
 # make start/stop PID files + logs
 /.run/
 

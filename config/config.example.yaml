@@ -40,11 +40,8 @@ summarizer:
     api_key_env: "ANTHROPIC_API_KEY"  # used when api_key below is not set
     api_key: null       # optional: paste a key directly instead of using the env var.
                          # Takes precedence over api_key_env. Stored in plaintext in
-                         # this file; the dashboard masks it on display but not on disk.
+                         # this file; the desktop app masks it on display but not on disk.
 
 server:
   status_api_host: "127.0.0.1"
   status_api_port: 8765
-
-dashboard:
-  port: 5173

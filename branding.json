@@ -4,7 +4,7 @@
   "pythonPackage": "katib_mudawwin",
   "pythonDistribution": "katib-mudawwin",
   "cliCommand": "katib-mudawwin",
-  "npmPackage": "katib-mudawwin-dashboard",
+  "npmPackage": "katib-mudawwin-desktop",
   "configDirName": "katib-mudawwin",
   "serviceUnitName": "katib-mudawwin"
 }

@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-# Report which project services are up: the engine status API and the
-# dashboard. (Local summarization runs in-process in the engine -- no
-# separate service to check.) Reads actual host/port settings from the
-# engine config when the venv is set up; otherwise falls back to the
-# documented defaults.
+# Report whether the engine status API is up. (Local summarization runs
+# in-process in the engine -- no separate service to check. The desktop app
+# is a GUI process, not a backgroundable service with an HTTP health
+# endpoint -- see Makefile's desktop-run for how to launch it.) Reads the
+# actual host/port from the engine config when the venv is set up;
+# otherwise falls back to the documented default.
 
 VENV_PYTHON="engine/.venv/bin/python"
 CONFIG_VALS=""
@@ -13,16 +14,15 @@ if [ -x "$VENV_PYTHON" ]; then
   CONFIG_VALS=$("$VENV_PYTHON" -c "
 from katib_mudawwin.config import load_config
 c = load_config()
-print(c.server.status_api_host, c.server.status_api_port, c.dashboard.port)
+print(c.server.status_api_host, c.server.status_api_port)
 " 2>/dev/null)
 fi
 
 if [ -n "$CONFIG_VALS" ]; then
-  read -r ENGINE_HOST ENGINE_PORT DASHBOARD_PORT <<< "$CONFIG_VALS"
+  read -r ENGINE_HOST ENGINE_PORT <<< "$CONFIG_VALS"
 else
   ENGINE_HOST="127.0.0.1"
   ENGINE_PORT="8765"
-  DASHBOARD_PORT="5173"
 fi
 
 echo "zoom-app-screen-note-taker -- service status"
@@ -55,8 +55,6 @@ except Exception:
 else
   down=$((down + 1))
 fi
-
-check "dashboard (localhost:$DASHBOARD_PORT)" "http://localhost:$DASHBOARD_PORT/health" || down=$((down + 1))
 
 echo ""
 if [ "$down" -eq 0 ]; then

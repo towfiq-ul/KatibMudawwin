@@ -11,11 +11,11 @@ from pydantic import BaseModel, Field, field_validator
 from katib_mudawwin.branding import CONFIG_DIR_NAME
 
 
-# Keep these two functions in sync with defaultStorageDir() /
-# defaultConfigPath() in dashboard/src/lib/config.js -- if the two diverge,
-# the dashboard can end up reading a different directory than the engine
-# writes to, with meetings recorded but never listed. Both pull the config
-# directory name from branding.json (see katib_mudawwin.branding).
+# Keep these two functions in sync with default_storage_dir() /
+# default_config_path() in desktop/src-tauri/src/config.rs -- if the two
+# diverge, the desktop app can end up reading a different directory than the
+# engine writes to, with meetings recorded but never listed. Both pull the
+# config directory name from branding.json (see katib_mudawwin.branding).
 def default_storage_dir() -> Path:
     system = platform.system()
     if system == "Darwin":
@@ -85,7 +85,7 @@ class AnthropicConfig(BaseModel):
     model: str = "claude-sonnet-5"
     api_key_env: str = "ANTHROPIC_API_KEY"
     # Optional: paste a literal key here instead of using an env var. Takes
-    # precedence over api_key_env when set. The dashboard masks this field
+    # precedence over api_key_env when set. The desktop app masks this field
     # when displaying config, but it is still stored in plaintext in
     # config.yaml -- prefer api_key_env unless you specifically want this.
     api_key: Optional[str] = None
@@ -112,10 +112,6 @@ class ServerConfig(BaseModel):
     status_api_port: int = 8765
 
 
-class DashboardConfig(BaseModel):
-    port: int = 5173
-
-
 class AppConfig(BaseModel):
     storage_dir: Path = Field(default_factory=default_storage_dir)
     detection: DetectionConfig = Field(default_factory=DetectionConfig)
@@ -125,7 +121,6 @@ class AppConfig(BaseModel):
     summarizer: SummarizerConfig = Field(default_factory=SummarizerConfig)
     retention: RetentionConfig = Field(default_factory=RetentionConfig)
     server: ServerConfig = Field(default_factory=ServerConfig)
-    dashboard: DashboardConfig = Field(default_factory=DashboardConfig)
 
     @field_validator("storage_dir", mode="before")
     @classmethod
@@ -146,7 +141,7 @@ def load_config(path: Optional[Path] = None) -> AppConfig:
 
 class ConfigWatcher:
     """Polls the config file's mtime and reloads when it changes, so the
-    engine can pick up edits made through the dashboard without restarting."""
+    engine can pick up edits made through the desktop app without restarting."""
 
     def __init__(self, path: Optional[Path] = None):
         self.path = path or default_config_path()

@@ -10,7 +10,6 @@ from katib_mudawwin.detection.linux_detector import PactlAudioSignalSource
 from katib_mudawwin.session.recorder import SessionRecorder
 from katib_mudawwin.status_api import run_status_api
 from katib_mudawwin.transcription.whisper_engine import WhisperEngine
-from katib_mudawwin.tray import build_tray_icon
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
@@ -47,7 +46,7 @@ def main() -> None:
 
     threading.Thread(
         target=run_status_api,
-        args=(recorder, config.server.status_api_host, config.server.status_api_port),
+        args=(recorder, config, config.server.status_api_host, config.server.status_api_port),
         daemon=True,
     ).start()
 
@@ -63,7 +62,10 @@ def main() -> None:
         config.server.status_api_port,
     )
 
-    build_tray_icon(recorder, config).run()  # blocks until Quit
+    # The tray icon and dashboard now live in the desktop/ (Tauri) app, a
+    # separate process that talks to this one over the status API -- this
+    # process just needs to keep its daemon threads alive.
+    threading.Event().wait()
 
 
 if __name__ == "__main__":
