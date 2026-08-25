@@ -22,7 +22,10 @@
 </script>
 
 <main>
-  <h1>{displayName}</h1>
+  <header class="app-header">
+    <img src="/icon.png" alt="" class="app-icon" />
+    <h1>{displayName}</h1>
+  </header>
 
   <section>
     <h2>Engine status</h2>
@@ -49,8 +52,22 @@
     color: #222;
   }
 
+  .app-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .app-icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 22%;
+    flex-shrink: 0;
+  }
+
   h1 {
     font-size: 1.4rem;
+    margin: 0;
   }
 
   h2 {
